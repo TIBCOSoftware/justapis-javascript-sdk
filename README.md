@@ -6,7 +6,7 @@ Lightweight JavaScript SDK to connect to a JustAPIs gateway through a web client
 
 ##Dependencies
 
-* [Bluebird](https://github.com/petkaantonov/bluebird)
+* [Native Promise Only](https://github.com/getify/native-promise-only)
 
 ##Setup
 
