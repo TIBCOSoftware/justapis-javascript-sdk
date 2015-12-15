@@ -99,8 +99,8 @@ contentType: "application/json",
 data: undefined,
 headers: {},
 transformations: {
-	request: [],
-	response: []
+	request: [ EncodeTransformation ],
+	response: [ DecodeTransformation ]
 }
 ```
 

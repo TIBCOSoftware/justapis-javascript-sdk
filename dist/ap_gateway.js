@@ -9,62 +9,26 @@ if(window) {
 },{"./lib/gateway/APGateway":2}],2:[function(require,module,exports){
 "use strict";
 
-var Request 		= require("../request/APRequest");
-var bind			= require("../utils/bind");
-var extend			= require("../utils/extend");
-var copy			= require("../utils/copy");
-var JSONParser		= require("../parsers/json");
-var FormDataParser	= require("../parsers/formData");
+var Request 				= require("../request/APRequest");
+var bind					= require("../utils/bind");
+var extend					= require("../utils/extend");
+var copy					= require("../utils/copy");
+var JSONParser				= require("../parsers/json");
+var FormDataParser			= require("../parsers/formData");
+var EncodeTransformation	= require("./transformations/encode");
+var DecodeTransformation	= require("./transformations/decode");
+
 
 function APGateway(options) {
 	this.config = {};
+	
 	extend(this.config, APGateway.defaults);
+	this.config.transformations = {
+		request: copy(APGateway.defaults.transformations.request),
+		response: copy(APGateway.defaults.transformations.response)
+	};
+	
 	extend(this.config, options);
-	
-	// Add default transformation to encode request data
-	this.addRequestTransformation(bind(this, function(request) {
-		if(request.method !== "GET") {
-			switch(request.contentType) {
-				case "application/x-www-form-urlencoded; charset=UTF-8":
-					request.data = this.config.parsers.form.toFormData(request.data);
-					break;
-				case "application/xml":
-					// Coming soon..
-					break;
-				case "application/json":
-					request.data = this.config.parsers.json.toJson(request.data);
-					break;
-			}
-		} else {
-			var paramArray = [], params = "";
-			if(typeof request.data === "object") {
-				for(var key in request.data) {
-					if(request.data.hasOwnProperty(key)) {
-						paramArray.push(key+"="+request.data[key]); 
-					}
-				}
-				params = paramArray.join("&");
-			}
-			if(params !== "") {
-				params = "?"+params;
-			}
-			request.url += params;
-		}
-		return request;	
-	}));
-	
-	// Add default transformation to decode response data
-	this.addResponseTransformation(bind(this, function(response) {
-		switch(response.contentType) {
-			case "xml":
-				// Coming soon...
-				break;
-			case "json":
-				response.data = this.config.parsers.json.fromJson(response.data);
-				break;
-		}
-		return response;
-	}));
 }
 
 /**
@@ -77,7 +41,7 @@ APGateway.defaults = {
 	crossDomain: true,
 	dataType: "json",
 	contentType: "application/json",
-	data: undefined,
+	data: {},
 	headers: {},
 	parsers: {
 		json: JSONParser,
@@ -85,8 +49,8 @@ APGateway.defaults = {
 		xml: undefined
 	},
 	transformations: {
-		request: [],
-		response: []
+		request: [ EncodeTransformation ],
+		response: [ DecodeTransformation ]
 	}
 };
 
@@ -154,7 +118,7 @@ extend(APGateway.prototype, {
 	
 	crossDomain: function(cors) {
 		if(typeof cors === "boolean") {
-			this.config.crossDomain = true;
+			this.config.crossDomain = cors;
 		} else {
 			return this.config.crossDomain;
 		}
@@ -164,10 +128,10 @@ extend(APGateway.prototype, {
 	copy: function() {
 		var gw = new APGateway(this.config);
 		gw.headers(copy(this.headers()));
-		gw.params(copy(this.params()));
+		gw.data(copy(this.data()));
+		gw.config.parsers = copy(this.config.parsers);
 		gw.requestTransformations(copy(this.config.transformations.request));
 		gw.responseTransformations(copy(this.config.transformations.response));
-		gw.config.parsers = copy(this.config.parsers);
 		return gw;
 	},
 	
@@ -208,7 +172,7 @@ extend(APGateway.prototype, {
 	},
 	
 	execute: function() {
-		var reqTrans = this.config.transformations.request, $config = extend({}, this.config), options;
+		var reqTrans = this.config.transformations.request, resTrans = this.config.transformations.response, $config = extend({}, this.config), options;
 		
 		// Remove transformations from the request options so they can't be modified on the fly
 		delete $config.transformations;
@@ -216,11 +180,11 @@ extend(APGateway.prototype, {
 		options = $config;
 		for(var i=0; i<reqTrans.length; i++) {
 			options = reqTrans[i](options);
-		}
+		}		
 		var request = new Request(options);
 		
 		return request.send().then(bind(this, function(response) {
-			var res = response, resTrans = this.config.transformations.response;
+			var res = response;
 			for(var i=0; i<resTrans.length; i++) {
 				res = resTrans[i](res);
 			}
@@ -231,7 +195,59 @@ extend(APGateway.prototype, {
 });
 
 module.exports = APGateway;
-},{"../parsers/formData":3,"../parsers/json":4,"../request/APRequest":5,"../utils/bind":7,"../utils/copy":8,"../utils/extend":9}],3:[function(require,module,exports){
+},{"../parsers/formData":5,"../parsers/json":6,"../request/APRequest":7,"../utils/bind":9,"../utils/copy":10,"../utils/extend":11,"./transformations/decode":3,"./transformations/encode":4}],3:[function(require,module,exports){
+"use strict";
+
+function decode(response) {
+	switch(response.contentType) {
+		case "xml":
+			// Coming soon...
+			break;
+		case "json":
+			response.data = response.origin.parsers.json.fromJson(response.data);
+			break;
+	}
+	return response;
+}
+
+module.exports = decode;
+},{}],4:[function(require,module,exports){
+"use strict";
+
+function encode(request) {
+	if(request.method !== "GET") {
+		switch(request.contentType) {
+			case "application/x-www-form-urlencoded; charset=UTF-8":
+				request.data = request.parsers.form.toFormData(request.data);
+				break;
+			case "application/xml":
+				// Coming soon..
+				break;
+			case "application/json":
+				request.data = request.parsers.json.toJson(request.data);
+				break;
+		}
+	} else {
+		var paramArray = [], params = "";
+		if(typeof request.data === "object") {
+			for(var key in request.data) {
+				if(request.data.hasOwnProperty(key)) {
+					paramArray.push(key+"="+request.data[key]); 
+				}
+			}
+			params = paramArray.join("&");
+		}
+		if(params !== "") {
+			params = "?"+params;
+		}
+		request.url += params;
+	}
+	return request;	
+}
+
+
+module.exports = encode;
+},{}],5:[function(require,module,exports){
 "use strict";
 
 function encodeToFormData(data) {
@@ -266,7 +282,7 @@ module.exports = {
 		}
 	}
 };
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -277,7 +293,7 @@ module.exports = {
 		return (json) ? JSON.parse(json) : undefined;
 	}
 };
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 
 var Promise 	= require("native-promise-only");
@@ -349,6 +365,7 @@ extend(Request.prototype, {
 				xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
 				break;
 		}
+		console.log("Sending request to url: "+this.url);
 		xhr.open(this.method, this.url, this.async);
 		xhr.setRequestHeader("Content-Type", this.contentType);
 		
@@ -376,24 +393,24 @@ extend(Request.prototype, {
 			};
 			
 			xhr.send(this.data);
+			console.dir(xhr);
 		}));	
 	}
 });
 
 module.exports = Request;
-},{"../response/APResponse":6,"../utils/bind":7,"../utils/extend":9,"native-promise-only":11}],6:[function(require,module,exports){
+},{"../response/APResponse":8,"../utils/bind":9,"../utils/extend":11,"native-promise-only":13}],8:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
 
-function APResponse(xhr, options) {
-	var opts = options || {};
+function APResponse(xhr, request) {
+	extend(this, APResponse.defaults);
 	
 	this.statusCode = xhr.status;
 	this.text = xhr.statusText;
-	this.contentType = opts.dataType || "json";
-	
 	this.headers = this.parseHeaders(xhr.getAllResponseHeaders());
+	extend(this.origin, request);
 	
 	if(xhr.responseText !== "") {
 		this.data = xhr.responseText;
@@ -406,6 +423,7 @@ APResponse.defaults = {
 	statusCode: 0,
 	text: "undefined",
 	data: {},
+	origin: {}
 };
 
 
@@ -430,7 +448,7 @@ extend(APResponse.prototype, {
 });
 
 module.exports = APResponse;
-},{"../utils/extend":9}],7:[function(require,module,exports){
+},{"../utils/extend":11}],9:[function(require,module,exports){
 "use strict";
 
 module.exports = function bind(context, fn) {
@@ -440,7 +458,7 @@ module.exports = function bind(context, fn) {
 		};
 	}
 };
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 module.exports = function copy(src) {
@@ -459,18 +477,17 @@ module.exports = function copy(src) {
 	}
 	return copied;
 };
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
 
 module.exports = function extend() {
 	var args = toArray(arguments), dest = args[0], src;
-	
-	if(dest && typeof dest === "object") {
+	if(typeof dest === "object") {
 		for(var i=1; i<args.length; i++) {
 			src = args[i];
-			if(src && typeof src === "object") {
+			if(typeof src === "object") {
 				for(var key in src) {
 					if(src.hasOwnProperty(key)) {
 						dest[key] = src[key];
@@ -482,13 +499,13 @@ module.exports = function extend() {
 	
 	return dest;
 };
-},{"./toArray":10}],10:[function(require,module,exports){
+},{"./toArray":12}],12:[function(require,module,exports){
 "use strict";
 
 module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
-},{}],11:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
