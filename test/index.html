@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Gateway test</title>
+	<script src="../dist/ap_gateway.js"></script>
+</head>
+</body>
+	<script type="text/javascript">
+		function run() {
+			if(APGateway) {
+				console.log("APGateway is defined");
+			}
+			var gw = new APGateway({ url: "http:localhost:5000" });
+			
+			gw
+			.data({ hello: "world", foo: "bar" })
+			.execute()
+			.then(function(res) {
+				console.log("Response is:");
+				console.dir(res);
+			})
+			.catch(function(e) {
+				console.log("Response failed:");
+				console.log(e.message);
+			});
+		}
+	</script>
+<body>
+</html>
