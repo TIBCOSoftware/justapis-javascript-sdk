@@ -199,7 +199,7 @@ module.exports = APGateway;
 "use strict";
 
 function decode(response) {
-	switch(response.contentType) {
+	switch(response.origin.dataType) {
 		case "xml":
 			// Coming soon...
 			break;
@@ -290,7 +290,13 @@ module.exports = {
 		return (data) ? JSON.stringify(data) : undefined;
 	},
 	fromJson: function(json) {
-		return (json) ? JSON.parse(json) : undefined;
+		var parsed;
+		try {
+			parsed = (json) ? JSON.parse(json) : undefined;
+		} catch(e) {
+			parsed = undefined;
+		}
+		return parsed;
 	}
 };
 },{}],7:[function(require,module,exports){
@@ -365,7 +371,7 @@ extend(Request.prototype, {
 				xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
 				break;
 		}
-		console.log("Sending request to url: "+this.url);
+		
 		xhr.open(this.method, this.url, this.async);
 		xhr.setRequestHeader("Content-Type", this.contentType);
 		
@@ -376,9 +382,10 @@ extend(Request.prototype, {
 		}
 		
 		return new Promise(bind(this, function(resolve, reject) {
+			var request = this;
 			this.addOnChangeListener(xhr, function() {
 				if(xhr.readyState === Request.states.DONE) {
-					var response = new APResponse(xhr, this);
+					var response = new APResponse(xhr, request);
 					if(response.statusCode >= 200 && response.statusCode < 400) {
 						resolve(response);
 					} else {
@@ -393,7 +400,6 @@ extend(Request.prototype, {
 			};
 			
 			xhr.send(this.data);
-			console.dir(xhr);
 		}));	
 	}
 });

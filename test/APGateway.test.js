@@ -17,7 +17,6 @@ var fakeIdSeed = 1;
 function initServer(server) {
 	server.respondWith("GET", "/people", JSON.stringify([{ name: "John" }]));
 	server.respondWith("POST", "/people", function(request) {
-		console.log("got to sinon");
 		var data = JSON.parse(request.requestBody);
 		if(data.name && data.age) {
 			request.respond(201, {}, JSON.stringify({ id: fakeIdSeed++, name: data.name, age: data.age }));
@@ -25,7 +24,7 @@ function initServer(server) {
 			request.respond(400, {}, "Bad Request");
 		}
 	});
-	server.respondWith("PUT", "/\/people\/(\d+)/", function(request, id) {
+	server.respondWith("PUT", /\/people\/(\d+)/, function(request, id) {
 		var data = JSON.parse(request.requestBody);
 		if(id && data.name && data.age) {
 			request.respond(200, {}, "OK");
@@ -33,15 +32,15 @@ function initServer(server) {
 			request.respond(400, {}, "Bad Request");
 		}
 	});
-	server.respondWith("PATCH", "/\/people\/(\d+)/", function(request, id) {
+	server.respondWith("PATCH", /\/people\/(\d+)/, function(request, id) {
 		var data = JSON.parse(request.requestBody);
-		if(id && data.name && data.age) {
+		if(id && (data.name || data.age)) {
 			request.respond(200, {}, "OK");
 		} else {
 			request.respond(400, {}, "Bad Request");
 		}
 	});
-	server.respondWith("DELETE", "/\/people\/(\d+)/", function(request, id) {
+	server.respondWith("DELETE", /\/people\/(\d+)/, function(request, id) {
 		if(id) {
 			request.respond(204, {}, undefined);
 		} else {
@@ -163,13 +162,14 @@ describe("APGateway", function() {
 	});
 	
 	it("should send GET requests to the server", function(done) {
-		
 		gateway
 			.url("/people")
 			.execute().should.eventually.satisfy(function(response) {
 				return response.data[0].name === "John";
 			})
 			.and.notify(done);
+			
+		server.respond();
 	});
 	
 	it("should send POST requests to the server", function(done) {
@@ -181,22 +181,28 @@ describe("APGateway", function() {
 				return response.data.id && response.data.name === "Paul";
 			})
 			.and.notify(done);
+			
+		server.respond();
 	});
 	
 	it("should send PUT requests to the server", function(done) {
 		gateway
 			.url("/people/15")
 			.method("PUT")
-			.data({ age: 34 })
+			.data({ name: "James", age: 34 })
 			.execute().should.eventually.be.fulfilled.and.notify(done);
+			
+		server.respond();
 	});
 	
 	it("should send PATCH requests to the server", function(done) {
 		gateway
 			.url("/people/20")
-			.method("PUT")
+			.method("PATCH")
 			.data({ name: "Joan" })
 			.execute().should.eventually.be.fulfilled.and.notify(done);
+			
+		server.respond();
 	});
 	
 	it("should send DELETE requests to the server", function(done) {
@@ -204,6 +210,8 @@ describe("APGateway", function() {
 			.url("/people/10")
 			.method("DELETE")
 			.execute().should.eventually.be.fulfilled.and.notify(done);
+			
+		server.respond();
 	});
 	
 	it("should apply request/response transformations", function(done) {
@@ -211,32 +219,34 @@ describe("APGateway", function() {
 		var decode = gateway.responseTransformations()[0];
 		
 		gateway
-		.url("/people")
-		.method("POST")
-		.data({ name: "Kelly", age: 41 })
-		.requestTransformations([
-			function(req) {
-				req.data.name = "Helen";
-				return req;
-			},
-			function(req) {
-				req.data.age = 90;
-				return req;	
-			},
-			encode
-		])
-		.responseTransformations([
-			function(res) {
-				res.HELLO = "WORLD!";
-				return res;
-			},
-			decode
-		])
-		.execute().should.eventually.satisfy(function(response) {
-			var data = response.data;
-			return data.HELLO === "WORLD" && data.name === "Helen" && data.age === 90;
-		})
-		.and.notify(done);
+			.url("/people")
+			.method("POST")
+			.data({ name: "Kelly", age: 41 })
+			.requestTransformations([
+				function(req) {
+					req.data.name = "Helen";
+					return req;
+				},
+				function(req) {
+					req.data.age = 90;
+					return req;	
+				},
+				encode
+			])
+			.responseTransformations([
+				decode,
+				function(res) {
+					res.data.HELLO = "WORLD!";
+					return res;
+				}
+			])
+			.execute().should.eventually.satisfy(function(response) {
+				var data = response.data;
+				return (data.HELLO === "WORLD!" && data.name === "Helen" && data.age === 90);
+			})
+			.and.notify(done);
+		
+		server.respond();
 	});
 	
 });
