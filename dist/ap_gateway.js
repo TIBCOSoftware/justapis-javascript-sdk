@@ -40,7 +40,7 @@ APGateway.defaults = {
 	async: true,
 	crossDomain: true,
 	dataType: "json",
-	contentType: "application/json",
+	contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 	data: {},
 	headers: {},
 	parsers: {
@@ -269,17 +269,7 @@ function encodeToFormData(data) {
 
 module.exports = {
 	toFormData: function(data) {
-		if(window && window.FormData) {
-			var form = new FormData();
-			if(typeof data === "object") {
-				for(var name in data) {
-					form.append(name, data[name]);
-				}
-			}
-			return form;
-		} else {
-			return encodeToFormData(data);
-		}
+		return encodeToFormData(data);
 	}
 };
 },{}],6:[function(require,module,exports){
