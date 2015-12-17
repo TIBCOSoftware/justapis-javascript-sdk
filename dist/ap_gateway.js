@@ -23,6 +23,9 @@ function APGateway(options) {
 	this.config = {};
 	
 	extend(this.config, APGateway.defaults);
+	this.config.data = copy(APGateway.defaults.data);
+	this.config.headers = copy(APGateway.defaults.headers);
+	this.config.parsers = copy(APGateway.defaults.parsers);
 	this.config.transformations = {
 		request: copy(APGateway.defaults.transformations.request),
 		response: copy(APGateway.defaults.transformations.response)
@@ -39,6 +42,7 @@ APGateway.defaults = {
 	method: "GET",
 	async: true,
 	crossDomain: true,
+	silentFail: true,
 	dataType: "json",
 	contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 	data: {},
@@ -125,6 +129,15 @@ extend(APGateway.prototype, {
 		return this;
 	},
 	
+	silentFail: function(silent) {
+		if(typeof silent === "boolean") {
+			this.config.silentFail = silent;
+		} else {
+			return this.config.silentFail;
+		}
+		return this;
+	},
+	
 	copy: function() {
 		var gw = new APGateway(this.config);
 		gw.headers(copy(this.headers()));
@@ -172,7 +185,12 @@ extend(APGateway.prototype, {
 	},
 	
 	execute: function() {
-		var reqTrans = this.config.transformations.request, resTrans = this.config.transformations.response, $config = extend({}, this.config), options;
+		var reqTrans = this.config.transformations.request, 
+			resTrans = this.config.transformations.response, 
+			$config = extend({}, this.config), 
+			options,
+			request,
+			promise;
 		
 		// Remove transformations from the request options so they can't be modified on the fly
 		delete $config.transformations;
@@ -181,15 +199,21 @@ extend(APGateway.prototype, {
 		for(var i=0; i<reqTrans.length; i++) {
 			options = reqTrans[i](options);
 		}		
-		var request = new Request(options);
+		request = new Request(options);
 		
-		return request.send().then(bind(this, function(response) {
+		promise = request.send().then(bind(this, function(response) {
 			var res = response;
 			for(var i=0; i<resTrans.length; i++) {
 				res = resTrans[i](res);
 			}
 			return res;
 		}));
+		
+		if(this.silentFail()) {
+			promise.catch(function(e) { return; });
+		}
+		
+		return promise;
 	},
 	
 });
@@ -379,14 +403,14 @@ extend(Request.prototype, {
 					if(response.statusCode >= 200 && response.statusCode < 400) {
 						resolve(response);
 					} else {
-						reject(new Error("APRequest -> Server responded with "+response.statusCode+": "+response.text));
+						reject("APRequest -> Server responded with "+response.statusCode+": "+response.text);
 					}
 				}
 			});
 			
 			xhr.ontimeout = function() {
 				var response = new APResponse(xhr, this);
-				reject(new Error("APRequest -> Request timeout - "+response.statusCode+" "+response.text));
+				reject("APRequest -> Request timeout - "+response.statusCode+" "+response.text);
 			};
 			
 			xhr.send(this.data);

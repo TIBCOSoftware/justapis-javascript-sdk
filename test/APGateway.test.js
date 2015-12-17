@@ -54,6 +54,7 @@ describe("APGateway", function() {
 	var server, gateway;
 	beforeEach(function() {
 		gateway = new APGateway();
+		gateway.contentType("application/json");
 		server = sinon.fakeServer.create();
 		initServer(server);
 	});
@@ -75,7 +76,8 @@ describe("APGateway", function() {
 	});
 	
 	it("should have default properties when created", function() {
-		expect(gateway.config).to.eql(APGateway.defaults);
+		var gw = new APGateway();
+		expect(gw.config).to.eql(APGateway.defaults);
 	});
 	
 	it("should allow to get/set the url", function() {

@@ -16,8 +16,8 @@ module.exports = function(grunt) {
 		jshint: {
 			lib: ['lib/**/*.js'],
 			options: {
+				strict: "global",
 				devel: true,
-				globalstrict: true,
 				browserify: true
 			}
 		},
@@ -34,7 +34,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-browserify');
 
-	grunt.registerTask('compile', ['jshint', 'browserify', 'watch']);  
+	grunt.registerTask('compile', ['browserify', 'jshint', 'watch']);
 
 	// Default task(s).
 	grunt.registerTask('default', ['compile']);

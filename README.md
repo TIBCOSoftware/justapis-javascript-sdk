@@ -94,10 +94,16 @@ url: "http://localhost:5000",
 method: "GET",
 async: true,
 crossDomain: true,
+silentFail: true,
 dataType: "json",
-contentType: "application/json",
-data: undefined,
+contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+data: {},
 headers: {},
+parsers: {
+	json: JSONParser,
+	form: FormDataParser,
+	xml: undefined // Coming soon...
+},
 transformations: {
 	request: [ EncodeTransformation ],
 	response: [ DecodeTransformation ]
@@ -148,7 +154,18 @@ Returns the current headers or the APGateway instance for quick chaining
 * *crossDomain* -> **boolean**
 	* If *crossDomain* is undefined the method will act as a getter, else it will set the value and return `this`.
 
-Returns the current url or the APGateway instance for quick chaining
+Returns the current crossDomain value or the APGateway instance for quick chaining
+
+**.silentFail( *silent* )**
+
+When a request is not successful **APGateway** will throw an error. Setting *silentFail* to `true` will cause the gateway to ignore those errors.
+
+* *silent* -> **boolean**
+	* Default value: `true`
+	* If *silent* is undefined the method will act as a getter, else it will set the value and return `this`.
+
+Returns the current value of silentFail or the APGateway instance for quick chaining
+
 
 **.copy()**
 
@@ -206,6 +223,38 @@ Returns the APGateway instance for quick chaining
 
 Returns a Promise
 
+##Framework integration
+
+###React
+
+The SDK will work with React.js out of the box since its plain JavaScript.
+
+###Angular
+
+Integrating with Angular.js is not a problem, here is an example of how you would use it.
+
+```javascript
+angular.module('MyModule')
+	.controller('MyModuleController', ['$scope', function($scope) {
+		// Declare a default message to show
+		$scope.message = "Default message";
+		// Create the gateway as usual...
+		var gateway = new APGateway();
+		
+		gateway
+		.url('http://my.service/message')
+		.execute()
+		.then(function(response) {
+			// Keep in mind when updating the $scope to use $apply 
+			//   so angular is made aware of the change
+			$scope.$apply(function() {
+				$scope.message = response.data;
+			});
+		});
+		
+	
+	});
+```
 
 ##Development
 
