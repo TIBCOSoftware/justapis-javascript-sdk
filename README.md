@@ -245,7 +245,7 @@ angular.module('MyModule')
 		.url('http://my.service/message')
 		.execute()
 		.then(function(response) {
-			// Keep in mind when updating the $scope to use $apply 
+			// Keep in mind, when updating the $scope, to use $apply 
 			//   so angular is made aware of the change
 			$scope.$apply(function() {
 				$scope.message = response.data;
@@ -293,6 +293,7 @@ Todos.ApplicationAdapter = DS.Adapter.extend({
 	
 	findRecord: function(store, type, id, snapshot) {
 		gateway
+		.method("GET")
 		.url(URL + "/" + id)
 		.silentFail(false);
 		
