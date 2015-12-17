@@ -256,6 +256,71 @@ angular.module('MyModule')
 	});
 ```
 
+###Ember
+
+Like React or Angular, there is no restriction to use APGateway in an Ember application. If you're using Ember Data however you might want to integrate APGateway so you can load Models from it.
+
+####Ember Data
+
+In order to integrate with Ember Data you will want to create an [Adapter](http://emberjs.com/api/data/classes/DS.Adapter.html).
+
+This example code shows the basic principle of how to integrate the two.
+
+**NOTE**: For simplicity's sake the example only shows implementations of `findRecord` and `createRecord` but when extending `DS.Adapter` you **must** implement the other methods too. 
+
+```javascript
+// url of your endpoint
+var URL = "http://localhost:5000/todos";
+var gateway = new APGateway();
+
+// This helper will make sure that the response of the gateway runs
+// inside Ember's run loop.
+function runRequestToGateway(gateway) {
+	return Ember.RSVP.Promise(function(resolve, reject) {
+		gateway
+		.execute()
+		.then(function(response) {
+			Ember.run(null, resolve, response.data);
+		})
+		.catch(function(error) {
+			Ember.run(null, reject, error);
+		});
+	});
+}
+
+// Register an ApplicationAdapter that uses APGateway internally...
+Todos.ApplicationAdapter = DS.Adapter.extend({
+	
+	findRecord: function(store, type, id, snapshot) {
+		gateway
+		.url(URL + "/" + id)
+		.silentFail(false);
+		
+		return runRequestToGateway(gateway);
+	},
+	
+	createRecord: function(store, type, snapshot) {
+		var data = this.serialize(snapshot, { includeId: true });
+		
+		gateway
+		.url(URL)
+		.method("POST")
+		.data(data)
+		.silentFail(false);
+		
+		return runRequestToGateway(gateway);
+	},
+	
+	updateRecord: function(store, type, snapshot) {...},
+	
+	deleteRecord: function(store, type, snapshot) {...},
+	
+	findAll: function(store, type, sinceToken, snapshotRecordArray) {...},
+	
+	query: function(store, type, query, recordArray) {...}
+});
+```
+
 ##Development
 
 If you would like to develop in the SDK you can just download the repository and do
