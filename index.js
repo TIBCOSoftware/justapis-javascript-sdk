@@ -2,6 +2,8 @@
 
 var APGateway = require('./lib/gateway/APGateway');
 
-if(window) {
+if(typeof window !== "undefined") {
 	window.APGateway = APGateway;
 }
+
+module.exports = APGateway;

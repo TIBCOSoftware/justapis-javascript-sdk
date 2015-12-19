@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "browser": {
+    "http": "./lib/shims/http/Http.js",
+    "url": "./lib/shims/url/Url.js"
+  },
   "author": "AnyPresence",
   "license": "MIT",
   "devDependencies": {
@@ -17,11 +21,14 @@
     "grunt-cli": "^0.1.13",
     "grunt-contrib-jshint": "^0.11.3",
     "grunt-contrib-watch": "^0.6.1",
+    "grunt-mocha-test": "^0.12.7",
+    "grunt-mochify": "^0.3.0",
     "mocha": "^2.3.4",
     "sinon": "^1.17.2",
     "watchify": "^3.6.1"
   },
   "dependencies": {
-    "native-promise-only": "^0.8.1"
+    "native-promise-only": "^0.8.1",
+    "tiny-emitter": "^1.0.2"
   }
 }
