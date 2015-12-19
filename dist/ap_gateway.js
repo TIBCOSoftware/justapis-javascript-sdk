@@ -273,8 +273,10 @@ function encode(request) {
 		}
 		if(params !== "") {
 			params = "?"+params;
+		} else {
+			params = null;
 		}
-		request.url.search += params;
+		request.url.search = params;
 	}
 	return request;	
 }
@@ -350,9 +352,9 @@ function APRequest(options) {
  */
 extend(APRequest.prototype, {	
 	send: function() {
-		var path = this.url.pathname || "";
-		path += this.url.search || "";
-		path += this.url.hash || "";
+		var path = (this.url.pathname) ? this.url.pathname : "";
+		path += (this.url.search) ? this.url.search : "";
+		path += (this.url.hash) ? this.url.hash : "";
 		
 		var headers = copy(this.headers);
 		if(typeof this.contentType === "string") {
