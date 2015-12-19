@@ -3,13 +3,16 @@
 
 var APGateway = require('./lib/gateway/APGateway');
 
-if(window) {
+if(typeof window !== "undefined") {
 	window.APGateway = APGateway;
 }
+
+module.exports = APGateway;
 },{"./lib/gateway/APGateway":2}],2:[function(require,module,exports){
 "use strict";
 
-var Request 				= require("../request/APRequest");
+var Url						= require("url");
+var APRequest 				= require("../request/APRequest");
 var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
 var copy					= require("../utils/copy");
@@ -23,6 +26,8 @@ function APGateway(options) {
 	this.config = {};
 	
 	extend(this.config, APGateway.defaults);
+	
+	this.config.url = copy(APGateway.defaults.url);
 	this.config.data = copy(APGateway.defaults.data);
 	this.config.headers = copy(APGateway.defaults.headers);
 	this.config.parsers = copy(APGateway.defaults.parsers);
@@ -31,17 +36,31 @@ function APGateway(options) {
 		response: copy(APGateway.defaults.transformations.response)
 	};
 	
-	extend(this.config, options);
+	if(options && typeof options.url === "string") {
+		var url = Url.parse(options.url);
+		var $config = extend({}, options);
+		delete $config.url;
+		$config.url = url;
+		extend(this.config, $config);
+	} else {
+		extend(this.config, options);
+	}
 }
 
 /**
  * Static
  */
 APGateway.defaults = {
-	url: "http://localhost:5000",
+	url: {
+		href: "http://localhost:5000",
+		protocol: "http:",			
+		hostname: "localhost",
+		port: "5000",
+		pathname: "/",
+		search: null,
+		hash: null
+	},
 	method: "GET",
-	async: true,
-	crossDomain: true,
 	silentFail: true,
 	dataType: "json",
 	contentType: "application/x-www-form-urlencoded; charset=UTF-8",
@@ -70,10 +89,11 @@ extend(APGateway.prototype, {
 	url: function(url) {
 		if(url) {
 			if(typeof url === "string") {
-				this.config.url = url;
+				var $url = Url.parse(url);
+				this.config.url = $url;
 			}
 		} else {
-			return this.config.url; 
+			return this.config.url.href; 
 		}
 		return this;
 	},
@@ -116,15 +136,6 @@ extend(APGateway.prototype, {
 			}
 		} else {
 			return this.config.headers;
-		}
-		return this;
-	},
-	
-	crossDomain: function(cors) {
-		if(typeof cors === "boolean") {
-			this.config.crossDomain = cors;
-		} else {
-			return this.config.crossDomain;
 		}
 		return this;
 	},
@@ -185,6 +196,7 @@ extend(APGateway.prototype, {
 	},
 	
 	execute: function() {
+		var i;
 		var reqTrans = this.config.transformations.request, 
 			resTrans = this.config.transformations.response, 
 			$config = extend({}, this.config), 
@@ -194,20 +206,16 @@ extend(APGateway.prototype, {
 		
 		// Remove transformations from the request options so they can't be modified on the fly
 		delete $config.transformations;
-		
 		options = $config;
-		for(var i=0; i<reqTrans.length; i++) {
+		for(i=0; i<reqTrans.length; i++) {
 			options = reqTrans[i](options);
-		}		
-		request = new Request(options);
+		}
+		request = new APRequest(options);
 		
-		promise = request.send().then(bind(this, function(response) {
-			var res = response;
-			for(var i=0; i<resTrans.length; i++) {
-				res = resTrans[i](res);
-			}
-			return res;
-		}));
+		promise = request.send();
+		for(i=0; i<resTrans.length; i++) {
+			promise.then(resTrans[i]);
+		}
 		
 		if(this.silentFail()) {
 			promise.catch(function(e) { return; });
@@ -219,17 +227,19 @@ extend(APGateway.prototype, {
 });
 
 module.exports = APGateway;
-},{"../parsers/formData":5,"../parsers/json":6,"../request/APRequest":7,"../utils/bind":9,"../utils/copy":10,"../utils/extend":11,"./transformations/decode":3,"./transformations/encode":4}],3:[function(require,module,exports){
+},{"../parsers/formData":5,"../parsers/json":6,"../request/APRequest":7,"../utils/bind":13,"../utils/copy":14,"../utils/extend":15,"./transformations/decode":3,"./transformations/encode":4,"url":12}],3:[function(require,module,exports){
 "use strict";
 
 function decode(response) {
-	switch(response.origin.dataType) {
-		case "xml":
-			// Coming soon...
-			break;
-		case "json":
-			response.data = response.origin.parsers.json.fromJson(response.data);
-			break;
+	if(typeof response.parsers === "object") {
+		switch(response.contentType) {
+			case "xml":
+				// Coming soon...
+				break;
+			case "json":
+				response.data = response.parsers.json.parse(response.data);
+				break;
+		}	
 	}
 	return response;
 }
@@ -242,13 +252,13 @@ function encode(request) {
 	if(request.method !== "GET") {
 		switch(request.contentType) {
 			case "application/x-www-form-urlencoded; charset=UTF-8":
-				request.data = request.parsers.form.toFormData(request.data);
+				request.data = request.parsers.form.serialize(request.data);
 				break;
 			case "application/xml":
 				// Coming soon..
 				break;
 			case "application/json":
-				request.data = request.parsers.json.toJson(request.data);
+				request.data = request.parsers.json.serialize(request.data);
 				break;
 		}
 	} else {
@@ -264,7 +274,7 @@ function encode(request) {
 		if(params !== "") {
 			params = "?"+params;
 		}
-		request.url += params;
+		request.url.search += params;
 	}
 	return request;	
 }
@@ -292,18 +302,22 @@ function encodeToFormData(data) {
 }
 
 module.exports = {
-	toFormData: function(data) {
+	serialize: function(data) {
 		return encodeToFormData(data);
+	},
+	parse: function(data) {
+		// Void function to adhere to common parser interface
+		return data;
 	}
 };
 },{}],6:[function(require,module,exports){
 "use strict";
 
 module.exports = {
-	toJson: function(data) {
+	serialize: function(data) {
 		return (data) ? JSON.stringify(data) : undefined;
 	},
-	fromJson: function(json) {
+	parse: function(json) {
 		var parsed;
 		try {
 			parsed = (json) ? JSON.parse(json) : undefined;
@@ -316,21 +330,142 @@ module.exports = {
 },{}],7:[function(require,module,exports){
 "use strict";
 
-var Promise 	= require("native-promise-only");
-var bind 		= require("../utils/bind");
-var extend		= require("../utils/extend");
-var APResponse	= require("../response/APResponse");
+var Es6Promise	= require("native-promise-only");
+var http			= require("http");
 
-function Request(options) {
-	this.detectEnv();
+var extend			= require("../utils/extend");
+var copy			= require("../utils/copy");
+var bind 			= require("../utils/bind");
+var APResponse		= require("../response/APResponse");
+
+
+function APRequest(options) {
 	options = options || {};
 	extend(this, options);
 }
 
+
+/**
+ * Methods
+ */
+extend(APRequest.prototype, {	
+	send: function() {
+		var path = this.url.pathname || "";
+		path += this.url.search || "";
+		path += this.url.hash || "";
+		
+		var headers = copy(this.headers);
+		if(typeof this.contentType === "string") {
+			headers["Content-Type"] = this.contentType;
+		}
+		
+		var self = this;
+		return new Es6Promise(function(resolve, reject) {
+			var req = http.request({
+				protocol: self.url.protocol,
+				hostname: self.url.hostname,
+				port: self.url.port,
+				path: path,
+				method: self.method,
+				headers: self.headers
+			}, function(res) {
+				var data = "";
+				res.on("data", function(chunk) {
+					data += chunk;
+				});
+				
+				res.on("end", function() {
+					// Create APResponse and finish
+					var apResponse = new APResponse(res, self.dataType, data);
+					apResponse.parsers = self.parsers;
+					resolve(apResponse);
+				});
+			});
+			
+			req.on("error", function(e) {
+				reject(e);
+			});
+			
+			if(self.method !== "GET") {
+				req.write(self.data);
+			}
+			
+			req.end();
+		});
+	}
+});
+
+module.exports = APRequest;
+},{"../response/APResponse":8,"../utils/bind":13,"../utils/copy":14,"../utils/extend":15,"http":9,"native-promise-only":17}],8:[function(require,module,exports){
+"use strict";
+
+var extend	= require("../utils/extend");
+
+function APResponse(response, dataType, data) {
+	extend(
+		this,
+		APResponse.defaults,
+		response,
+		{ data: data, contentType: dataType }
+	);
+}
+
+APResponse.defaults = {
+	statusCode: 0,
+	statusMessage: "",
+	data: {},
+	headers: {}
+};
+
+module.exports = APResponse;
+},{"../utils/extend":15}],9:[function(require,module,exports){
+"use strict";
+
+var bind 			= require("../../utils/bind");
+var extend			= require("../../utils/extend");
+var HttpRequest		= require("./HttpRequest");
+
+
+var Http = {};
+
+extend(Http, {
+	request: function(options, callback) {
+		var request = new HttpRequest(options);
+		if(typeof callback === "function") {
+			request.on("done", callback);
+		}
+		return request;	
+	}
+});
+
+module.exports = Http;
+},{"../../utils/bind":13,"../../utils/extend":15,"./HttpRequest":10}],10:[function(require,module,exports){
+"use strict";
+
+var extend			= require("../../utils/extend");
+var copy			= require("../../utils/copy");
+var bind			= require("../../utils/bind");
+var HttpResponse	= require("./HttpResponse");
+var EventEmitter 	= require("tiny-emitter");
+
+function HttpRequest(options) {
+	this.url = "";
+	this.method = options.method;
+	this.headers = copy(options.headers);
+	
+	if(typeof options === "object") {
+		this.url = options.protocol + "//" + options.hostname + ":" + options.port + options.path;
+	}
+	
+	this.detectEnv();
+}
+
+HttpRequest.prototype = new EventEmitter();
+
 /**
  * Static
  */
-Request.states = {
+HttpRequest.states = {
 	'UNSENT'			: 0,
 	'OPENED'			: 1,
 	'HEADERS_RECEIVED'	: 2,
@@ -338,100 +473,98 @@ Request.states = {
 	'DONE'				: 4 
 };
 
-Request.env = {
+HttpRequest.env = {
 	modern	: 0,
 	ie8		: 1,
 	ie6		: 2
 };
 
-
-/**
- * Methods
- */
-extend(Request.prototype, {
+extend(HttpRequest.prototype, {
+	write: function(data) {
+		this.data = data;
+	},
+	
+	end: function() {
+		var xhr;
+		
+		switch(this.env) {
+			case HttpRequest.env.modern:
+				xhr = new window.XMLHttpRequest();
+				break;
+			case HttpRequest.env.ie8:
+				xhr = new window.XDomainRequest();
+				break;
+			case HttpRequest.env.ie6:
+				xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
+				break;
+		}
+		
+		xhr.open(this.method, this.url, true);
+		
+		if(typeof this.headers === "object") {
+			for(var key in this.headers) {
+				if(this.headers.hasOwnProperty(key)) {
+					xhr.setRequestHeader(key, this.headers[key]);
+				}
+			}
+		}
+		
+		this.addOnChangeListener(xhr, bind(this, function() {
+			if(xhr.readyState === HttpRequest.states.DONE) {
+				var response = new HttpResponse(xhr);
+				if(xhr.status >= 200 && xhr.status < 400) {
+					this.emit("done", response);
+					response.emit("data", response.data);
+					response.emit("end");
+				} else {
+					this.emit("error", new Error("Request failed -> "+response.statusCode+", "+response.text));
+				}
+			}
+		}));
+		
+		xhr.ontimeout = bind(this, function() {
+			var response = new HttpResponse(xhr);
+			this.emit("error", new Error("Request timeout -> "+response.statusCode+", "+response.text));
+		});
+		
+		xhr.send(this.data);
+	},
 	
 	detectEnv: function() {
 		if(typeof XMLHttpRequest !== "undefined") {
-			this.env = Request.env.modern;
+			this.env = HttpRequest.env.modern;
 		} else if(typeof XDomainRequest !== "undefined") {
-			this.env = Request.env.ie8;
+			this.env = HttpRequest.env.ie8;
 		} else if(typeof ActiveXObject !== "undefined") {
-			this.env = Request.env.ie6;
+			this.env = HttpRequest.env.ie6;
 		}
 	},
 	
 	addOnChangeListener: function(xhr, fn) {
 		switch(this.env) {
-			case Request.env.modern:
-			case Request.env.ie6:
+			case HttpRequest.env.modern:
+			case HttpRequest.env.ie6:
 				xhr.onreadystatechange = fn;
 				break;
-			case Request.env.ie8:
+			case HttpRequest.env.ie8:
 				xhr.onload = fn;
 				break;
 		}
-	},
-	
-	send: function() {
-		var xhr;
-		switch(this.env) {
-			case Request.env.modern:
-				xhr = new window.XMLHttpRequest();
-				break;
-			case Request.env.ie8:
-				xhr = new window.XDomainRequest();
-				break;
-			case Request.env.ie6:
-				xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
-				break;
-		}
-		
-		xhr.open(this.method, this.url, this.async);
-		xhr.setRequestHeader("Content-Type", this.contentType);
-		
-		for(var key in this.headers) {
-			if(this.headers.hasOwnProperty(key)) {
-				xhr.setRequestHeader(key, this.headers[key]);
-			}
-		}
-		
-		return new Promise(bind(this, function(resolve, reject) {
-			var request = this;
-			this.addOnChangeListener(xhr, function() {
-				if(xhr.readyState === Request.states.DONE) {
-					var response = new APResponse(xhr, request);
-					if(response.statusCode >= 200 && response.statusCode < 400) {
-						resolve(response);
-					} else {
-						reject("APRequest -> Server responded with "+response.statusCode+": "+response.text);
-					}
-				}
-			});
-			
-			xhr.ontimeout = function() {
-				var response = new APResponse(xhr, this);
-				reject("APRequest -> Request timeout - "+response.statusCode+" "+response.text);
-			};
-			
-			xhr.send(this.data);
-		}));	
 	}
 });
 
-module.exports = Request;
-},{"../response/APResponse":8,"../utils/bind":9,"../utils/extend":11,"native-promise-only":13}],8:[function(require,module,exports){
+
+module.exports = HttpRequest;
+},{"../../utils/bind":13,"../../utils/copy":14,"../../utils/extend":15,"./HttpResponse":11,"tiny-emitter":18}],11:[function(require,module,exports){
 "use strict";
 
-var extend	= require("../utils/extend");
+var extend		= require("../../utils/extend");
+var EventEmitter = require("tiny-emitter");
 
-function APResponse(xhr, request) {
-	extend(this, APResponse.defaults);
-	
+function HttpResponse(xhr) {
 	this.statusCode = xhr.status;
-	this.text = xhr.statusText;
+	this.statusMessage = xhr.statusText;
 	this.headers = this.parseHeaders(xhr.getAllResponseHeaders());
-	extend(this.origin, request);
-	
 	if(xhr.responseText !== "") {
 		this.data = xhr.responseText;
 	} else if(xhr.responseXml !== "") {
@@ -439,15 +572,9 @@ function APResponse(xhr, request) {
 	}
 }
 
-APResponse.defaults = {
-	statusCode: 0,
-	text: "undefined",
-	data: {},
-	origin: {}
-};
+HttpResponse.prototype = new EventEmitter();
 
-
-extend(APResponse.prototype, {
+extend(HttpResponse.prototype, {
 	parseHeaders: function (headerStr) {
 		var headers = {};
 		if (!headerStr) {
@@ -467,8 +594,33 @@ extend(APResponse.prototype, {
 	}
 });
 
-module.exports = APResponse;
-},{"../utils/extend":11}],9:[function(require,module,exports){
+module.exports = HttpResponse;
+},{"../../utils/extend":15,"tiny-emitter":18}],12:[function(require,module,exports){
+"use strict";
+
+var Url = {
+	parse: function(url) {
+		var parsed = {};
+		if(typeof url === "string") {
+			var parser = document.createElement('a');
+			parser.href = url;
+			
+			parsed.href = url;
+			parsed.protocol = parser.protocol;
+			parsed.hostname = parser.hostname;
+			parsed.port = parser.port;    
+			parsed.pathname = parser.pathname;
+			parsed.search = parser.search;  
+			parsed.hash = parser.hash;
+		}
+		
+		return parsed;
+	}
+};
+
+
+module.exports = Url;
+},{}],13:[function(require,module,exports){
 "use strict";
 
 module.exports = function bind(context, fn) {
@@ -478,7 +630,7 @@ module.exports = function bind(context, fn) {
 		};
 	}
 };
-},{}],10:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 "use strict";
 
 module.exports = function copy(src) {
@@ -497,7 +649,7 @@ module.exports = function copy(src) {
 	}
 	return copied;
 };
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
@@ -519,13 +671,13 @@ module.exports = function extend() {
 	
 	return dest;
 };
-},{"./toArray":12}],12:[function(require,module,exports){
+},{"./toArray":16}],16:[function(require,module,exports){
 "use strict";
 
 module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
-},{}],13:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -902,4 +1054,72 @@ module.exports = function toArray(arr) {
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],18:[function(require,module,exports){
+function E () {
+	// Keep this empty so it's easier to inherit from
+  // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
+}
+
+E.prototype = {
+	on: function (name, callback, ctx) {
+    var e = this.e || (this.e = {});
+
+    (e[name] || (e[name] = [])).push({
+      fn: callback,
+      ctx: ctx
+    });
+
+    return this;
+  },
+
+  once: function (name, callback, ctx) {
+    var self = this;
+    function listener () {
+      self.off(name, listener);
+      callback.apply(ctx, arguments);
+    };
+
+    listener._ = callback
+    return this.on(name, listener, ctx);
+  },
+
+  emit: function (name) {
+    var data = [].slice.call(arguments, 1);
+    var evtArr = ((this.e || (this.e = {}))[name] || []).slice();
+    var i = 0;
+    var len = evtArr.length;
+
+    for (i; i < len; i++) {
+      evtArr[i].fn.apply(evtArr[i].ctx, data);
+    }
+
+    return this;
+  },
+
+  off: function (name, callback) {
+    var e = this.e || (this.e = {});
+    var evts = e[name];
+    var liveEvents = [];
+
+    if (evts && callback) {
+      for (var i = 0, len = evts.length; i < len; i++) {
+        if (evts[i].fn !== callback && evts[i].fn._ !== callback)
+          liveEvents.push(evts[i]);
+      }
+    }
+
+    // Remove event from queue to prevent memory leak
+    // Suggested by https://github.com/lazd
+    // Ref: https://github.com/scottcorgan/tiny-emitter/commit/c6ebfaa9bc973b33d110a84a307742b7cf94c953#commitcomment-5024910
+
+    (liveEvents.length)
+      ? e[name] = liveEvents
+      : delete e[name];
+
+    return this;
+  }
+};
+
+module.exports = E;
+
 },{}]},{},[1]);

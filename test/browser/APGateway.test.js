@@ -1,10 +1,11 @@
-/* global sinon */
-/* global chai */
-/* global chaiAsPromised */
-/* global APGateway */
 "use strict";
 
-mocha.setup('bdd');
+var mocha 			= require("mocha");
+var chai			= require("chai");
+var chaiAsPromised	= require("chai-as-promised");
+var sinon			= require("sinon");
+var APGateway		= require("../../index.js");
+
 chai.use(chaiAsPromised);
 
 var expect = chai.expect;
@@ -15,8 +16,8 @@ var should = chai.should();
  */
 var fakeIdSeed = 1;
 function initServer(server) {
-	server.respondWith("GET", "/people", JSON.stringify([{ name: "John" }]));
-	server.respondWith("POST", "/people", function(request) {
+	server.respondWith("GET", /\/people/, JSON.stringify([{ name: "John" }]));
+	server.respondWith("POST", /\/people/, function(request) {
 		var data = JSON.parse(request.requestBody);
 		if(data.name && data.age) {
 			request.respond(201, {}, JSON.stringify({ id: fakeIdSeed++, name: data.name, age: data.age }));
@@ -49,7 +50,6 @@ function initServer(server) {
 	});
 }
 
-
 describe("APGateway", function() {
 	var server, gateway;
 	beforeEach(function() {
@@ -62,7 +62,7 @@ describe("APGateway", function() {
 	afterEach(function() {
 		server.restore();
 	});
-	
+		
 	it("should exist", function() {
 		expect(APGateway).to.exist;
 	});
@@ -107,19 +107,11 @@ describe("APGateway", function() {
 		expect(gateway.headers()).to.eql({ "Test-Header": "Test-Header-Value", "Another-Header": "Another-Header-Value" });
 	});
 	
-	it("should allow to get/set CORS flag", function() {
-		gateway.crossDomain(true);
-		expect(gateway.crossDomain()).to.be.true;
-		gateway.crossDomain(false);
-		expect(gateway.crossDomain()).to.be.false;
-	});
-	
 	it("should be able to make copies of itself", function() {
 		gateway
 		.method("PATCH")
 		.headers({ "Foo": "Bar" })
 		.url("www.test.com")
-		.crossDomain(true)
 		.contentType("application/xml")
 		.data({ foo: "bar" });
 		
@@ -166,7 +158,8 @@ describe("APGateway", function() {
 	it("should send GET requests to the server", function(done) {
 		gateway
 			.url("/people")
-			.execute().should.eventually.satisfy(function(response) {
+			.execute()
+			.should.eventually.satisfy(function(response) {
 				return response.data[0].name === "John";
 			})
 			.and.notify(done);
