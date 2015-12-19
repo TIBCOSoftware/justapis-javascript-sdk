@@ -199,10 +199,14 @@ extend(APGateway.prototype, {
 		var i;
 		var reqTrans = this.config.transformations.request, 
 			resTrans = this.config.transformations.response, 
-			$config = extend({}, this.config), 
 			options,
 			request,
-			promise;
+			promise,
+			$config = extend({}, this.config, {
+				url: copy(this.config.url), 
+				headers: copy(this.config.headers),
+				parsers: copy(this.config.parsers)
+			}); 
 		
 		// Remove transformations from the request options so they can't be modified on the fly
 		delete $config.transformations;
@@ -369,7 +373,7 @@ extend(APRequest.prototype, {
 				port: self.url.port,
 				path: path,
 				method: self.method,
-				headers: self.headers
+				headers: headers
 			}, function(res) {
 				var data = "";
 				res.on("data", function(chunk) {
