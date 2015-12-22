@@ -17,6 +17,7 @@ var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
 var copy					= require("../utils/copy");
 var JSONParser				= require("../parsers/json");
+var XMLParser				= require("../parsers/xml");
 var FormDataParser			= require("../parsers/formData");
 var EncodeTransformation	= require("./transformations/encode");
 var DecodeTransformation	= require("./transformations/decode");
@@ -69,7 +70,7 @@ APGateway.defaults = {
 	parsers: {
 		json: JSONParser,
 		form: FormDataParser,
-		xml: undefined
+		xml: XMLParser
 	},
 	transformations: {
 		request: [ EncodeTransformation ],
@@ -231,14 +232,14 @@ extend(APGateway.prototype, {
 });
 
 module.exports = APGateway;
-},{"../parsers/formData":5,"../parsers/json":6,"../request/APRequest":7,"../utils/bind":13,"../utils/copy":14,"../utils/extend":15,"./transformations/decode":3,"./transformations/encode":4,"url":12}],3:[function(require,module,exports){
+},{"../parsers/formData":5,"../parsers/json":6,"../parsers/xml":13,"../request/APRequest":7,"../utils/bind":14,"../utils/copy":15,"../utils/extend":16,"./transformations/decode":3,"./transformations/encode":4,"url":12}],3:[function(require,module,exports){
 "use strict";
 
 function decode(response) {
 	if(typeof response.parsers === "object") {
 		switch(response.contentType) {
 			case "xml":
-				// Coming soon...
+				response.data = response.parsers.xml.parse(response.data);
 				break;
 			case "json":
 				response.data = response.parsers.json.parse(response.data);
@@ -259,7 +260,7 @@ function encode(request) {
 				request.data = request.parsers.form.serialize(request.data);
 				break;
 			case "application/xml":
-				// Coming soon..
+				request.data = request.parsers.xml.serialize(request.data);
 				break;
 			case "application/json":
 				request.data = request.parsers.json.serialize(request.data);
@@ -402,7 +403,7 @@ extend(APRequest.prototype, {
 });
 
 module.exports = APRequest;
-},{"../response/APResponse":8,"../utils/bind":13,"../utils/copy":14,"../utils/extend":15,"http":9,"native-promise-only":17}],8:[function(require,module,exports){
+},{"../response/APResponse":8,"../utils/bind":14,"../utils/copy":15,"../utils/extend":16,"http":11,"native-promise-only":18}],8:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
@@ -424,28 +425,7 @@ APResponse.defaults = {
 };
 
 module.exports = APResponse;
-},{"../utils/extend":15}],9:[function(require,module,exports){
-"use strict";
-
-var bind 			= require("../../utils/bind");
-var extend			= require("../../utils/extend");
-var HttpRequest		= require("./HttpRequest");
-
-
-var Http = {};
-
-extend(Http, {
-	request: function(options, callback) {
-		var request = new HttpRequest(options);
-		if(typeof callback === "function") {
-			request.on("done", callback);
-		}
-		return request;	
-	}
-});
-
-module.exports = Http;
-},{"../../utils/bind":13,"../../utils/extend":15,"./HttpRequest":10}],10:[function(require,module,exports){
+},{"../utils/extend":16}],9:[function(require,module,exports){
 "use strict";
 
 var extend			= require("../../utils/extend");
@@ -561,7 +541,7 @@ extend(HttpRequest.prototype, {
 
 
 module.exports = HttpRequest;
-},{"../../utils/bind":13,"../../utils/copy":14,"../../utils/extend":15,"./HttpResponse":11,"tiny-emitter":18}],11:[function(require,module,exports){
+},{"../../utils/bind":14,"../../utils/copy":15,"../../utils/extend":16,"./HttpResponse":10,"tiny-emitter":19}],10:[function(require,module,exports){
 "use strict";
 
 var extend		= require("../../utils/extend");
@@ -601,7 +581,28 @@ extend(HttpResponse.prototype, {
 });
 
 module.exports = HttpResponse;
-},{"../../utils/extend":15,"tiny-emitter":18}],12:[function(require,module,exports){
+},{"../../utils/extend":16,"tiny-emitter":19}],11:[function(require,module,exports){
+"use strict";
+
+var bind 			= require("../../utils/bind");
+var extend			= require("../../utils/extend");
+var HttpRequest		= require("./HttpRequest");
+
+
+var Http = {};
+
+extend(Http, {
+	request: function(options, callback) {
+		var request = new HttpRequest(options);
+		if(typeof callback === "function") {
+			request.on("done", callback);
+		}
+		return request;	
+	}
+});
+
+module.exports = Http;
+},{"../../utils/bind":14,"../../utils/extend":16,"./HttpRequest":9}],12:[function(require,module,exports){
 "use strict";
 
 var Url = {
@@ -629,6 +630,38 @@ module.exports = Url;
 },{}],13:[function(require,module,exports){
 "use strict";
 
+module.exports = {
+	
+	serialize: function(xml) {
+		var result;
+		if(xml) {
+			try {
+				var serializer = new XMLSerializer();
+				result = serializer.serializeToString(xml);
+			} catch(e) {
+				result = xml;
+			}
+		}
+		return result;
+	},
+	
+	parse: function(xmlstring) {
+		var result;
+		if(typeof xmlstring === "string") {
+			try {
+				var parser = new DOMParser();
+				result = parser.parseFromString(xmlstring, "application/xml");
+			} catch(e) {
+				result = xmlstring;
+			}
+		}
+		return result;
+	}
+		
+};
+},{}],14:[function(require,module,exports){
+"use strict";
+
 module.exports = function bind(context, fn) {
 	if(context && fn && typeof fn === "function") {
 		return function() {
@@ -636,7 +669,7 @@ module.exports = function bind(context, fn) {
 		};
 	}
 };
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 
 module.exports = function copy(src) {
@@ -655,7 +688,7 @@ module.exports = function copy(src) {
 	}
 	return copied;
 };
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
@@ -677,13 +710,13 @@ module.exports = function extend() {
 	
 	return dest;
 };
-},{"./toArray":16}],16:[function(require,module,exports){
+},{"./toArray":17}],17:[function(require,module,exports){
 "use strict";
 
 module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -1060,7 +1093,7 @@ module.exports = function toArray(arr) {
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 function E () {
 	// Keep this empty so it's easier to inherit from
   // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
