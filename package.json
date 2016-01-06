@@ -7,8 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "browser": {
-    "http": "./lib/shims/http/Http.js",
-    "url": "./lib/shims/url/Url.js"
+    "http": "./lib/shims/http/http.js",
+    "url": "./lib/shims/url/url.js",
+    "./lib/parsers/xml": "./lib/shims/xml/xml.js"
   },
   "author": "AnyPresence",
   "license": "MIT",
@@ -29,6 +30,8 @@
   },
   "dependencies": {
     "native-promise-only": "^0.8.1",
-    "tiny-emitter": "^1.0.2"
+    "tiny-emitter": "^1.0.2",
+    "xml2js": "^0.4.15",
+    "xmlserializer": "^0.3.3"
   }
 }
