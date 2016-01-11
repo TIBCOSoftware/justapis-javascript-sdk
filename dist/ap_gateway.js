@@ -8,11 +8,234 @@ if(typeof window !== "undefined") {
 }
 
 module.exports = APGateway;
-},{"./lib/gateway/APGateway":2}],2:[function(require,module,exports){
+},{"./lib/gateway/APGateway":4}],2:[function(require,module,exports){
 "use strict";
 
+var Es6Promise	    = require("native-promise-only");
+var extend          = require("../utils/extend");
+var bind            = require("../utils/bind");
+var defaultStorage  = require("./persistence/APMemoryStorage");
+
+function APCache(prefix) {
+    this.prefix = prefix;
+    this.storage = APCache.defaults.storage;
+    this.ttl = APCache.defaults.ttl;
+    this.expirationCheck = APCache.defaults.expirationCheck;
+}
+
+APCache.defaults = {
+   
+   storage: defaultStorage,
+   
+   ttl: 604800000,
+   
+   expirationCheck: 600,
+   
+   set: function(key, value) {
+       if(key !== undefined && key !== null && value !== undefined && value !== null) {
+           var serialized = this.cacheKey(key);
+           var fullValue = { value: value, timestamp: (new Date()).toJSON() };
+           return this.storage.set(serialized, fullValue);
+       }
+       return new Es6Promise(function(resolve, reject) { resolve(undefined); }); 
+   },
+   
+   get: function(key) {
+       if(key !== undefined && key !== null) {
+           var serialized = this.cacheKey(key);
+           return this.storage.get(serialized).then(bind(this, function(record) {
+               var isAlive = this.checkTTL(record);
+               return (isAlive) ? record.value : undefined;
+           }));
+       }
+       return new Es6Promise(function(resolve, reject) { resolve(undefined); });
+   },
+   
+   getAll: function() {
+       return this.storage.getAll(this.prefix).then(bind(this, function(all) {
+           var isAlive = true, pairs = {};
+           for(var key in all) {
+               if(all.hasOwnProperty(key)) {
+                   isAlive = this.checkTTL(all[key]);
+                   if(!isAlive) {
+                       this.remove(key);
+                       delete all[key];
+                   } else {
+                       pairs[key] = all[key].value;
+                   }
+               }
+           }
+           return all;
+       }));
+   },
+   
+   remove: function(key) {
+       if(key !== undefined && key !== null) {
+           var serialized = this.cacheKey(key);
+           return this.storage.remove(serialized);
+       }
+       return new Es6Promise(function(resolve, reject) { resolve(undefined); });
+   },
+   
+   checkTTL: function(record) {
+       var isAlive = false, now = new Date(), diff;
+       if(record !== undefined && record !== null && record.timestamp) {
+           var ts = new Date(record.timestamp);
+           diff = Math.abs(ts - now);
+           isAlive = diff < this.ttl;
+       }
+       return isAlive;
+   },
+   
+   cacheKey: function(key) {
+       var serialized = "", keyString = "";
+       if(key !== undefined && key !== null) {
+           if(typeof this.prefix === "string") {
+               serialized += this.prefix + "::";
+           }
+           serialized += (typeof key !== "string") ? JSON.stringify(key) : key;
+       }
+       return serialized;
+   },
+   
+   flush: function() {
+       return this.storage.flush(this.prefix);
+   }
+};
+
+extend(APCache.prototype, {
+   set: APCache.defaults.set,
+   get: APCache.defaults.get,
+   getAll: APCache.defaults.getAll,
+   remove: APCache.defaults.remove,
+   checkTTL: APCache.defaults.checkTTL,
+   cacheKey: APCache.defaults.cacheKey,
+   flush: APCache.defaults.flush,
+   
+   startCleanupCycle: function() {
+       this.cleanupCycle = setInterval(bind(this, function() {
+           var isAlive = true;
+           this.getAll().then(bind(this, function(allRecords) {
+              for(var key in allRecords) {
+                  if(allRecords.hasOwnProperty(key)) {
+                      isAlive = this.checkTTL(allRecords[key]);
+                      if(!isAlive) {
+                          this.remove(key);
+                      }
+                  }
+              } 
+           }));
+       }), this.expirationCheck*1000);
+       return this;
+   },
+   
+   stopCleanupCycle: function() {
+       if(this.cleanupCycle) {
+           clearInterval(this.cleanupCycle);
+       }
+       return this;
+   }
+});
+
+
+module.exports = APCache;
+},{"../utils/bind":16,"../utils/extend":18,"./persistence/APMemoryStorage":3,"native-promise-only":20}],3:[function(require,module,exports){
+"use strict";
+
+var Es6Promise  = require("native-promise-only");
+var extend      = require("../../utils/extend");
+var bind        = require("../../utils/bind");
+
+function APBrowserStorage() {
+    if(typeof window.localStorage !== "undefined") {
+        this.store = window.localStorage;
+    } else {
+        throw new Error("window.localStorage is required for APBrowserStorage.");
+    }
+}
+
+extend(APBrowserStorage.prototype, {
+    
+   keysWithPrefix: function(prefix) {
+       var results = [], pr = prefix + "::";
+       for(var i=0 ; i<this.store.length ; i++) {
+           var key = this.store.key(i);
+           var start = key.slice(0, pr.length);
+           if(start === pr) {
+               results.push(key);
+           }
+       }
+       return results;
+   },
+   
+   findByPrefix: function(prefix) {
+       var results = {}, pr = prefix + "::";
+       for(var i=0 ; i<this.store.length ; i++) {
+           var key = this.store.key(i);
+           var start = key.slice(0, pr.length);
+           if(start === pr) {
+               results[key] = JSON.parse(this.store.getItem(key));
+           }
+       }
+       return results;
+   },
+    
+   set: function(key, value) {
+       return new Es6Promise(bind(this, function(resolve) {
+            this.store.setItem(key, JSON.stringify(value));
+            resolve();
+       }));
+   },
+   
+   get: function(key) {
+       return new Es6Promise(bind(this, function(resolve) {
+            var record = {}, item = JSON.parse(this.store.getItem(key));
+            if(item !== null && item !== undefined && typeof item === "object") {
+                record.timestamp = item.timestamp;
+                record.value = item.value;
+            }
+            resolve(record);
+       }));
+   },
+   
+   getAll: function(prefix) {
+       return new Es6Promise(bind(this, function(resolve) {
+            var result = {};
+            if(typeof prefix === "string" && prefix !== "") {
+                result = this.findByPrefix(prefix);
+            }
+            resolve(result);           
+       }));
+   },
+   
+   remove: function(key) {
+       return new Es6Promise(bind(this, function(resolve) {
+            this.store.removeItem(key);
+            resolve(true);
+       }));
+   },
+   
+   flush: function(prefix) {
+       return new Es6Promise(bind(this, function(resolve) {
+            var keys = this.keysWithPrefix(prefix);
+            console.log(keys);
+            for(var i=0 ; i < keys.length ; i++) {
+                this.remove(keys[i]);
+            }
+            resolve(true);
+       }));
+   }
+});
+
+module.exports = new APBrowserStorage();
+},{"../../utils/bind":16,"../../utils/extend":18,"native-promise-only":20}],4:[function(require,module,exports){
+"use strict";
+
+var Es6Promise	            = require("native-promise-only");
 var Url						= require("url");
 var APRequest 				= require("../request/APRequest");
+var APResponse              = require("../response/APResponse");
+var APCache                 = require("../cache/APCache");
 var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
 var copy					= require("../utils/copy");
@@ -63,6 +286,7 @@ APGateway.defaults = {
 	},
 	method: "GET",
 	silentFail: true,
+    cache: true,
 	dataType: "json",
 	contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 	data: {},
@@ -74,13 +298,24 @@ APGateway.defaults = {
 	},
 	transformations: {
 		request: [ EncodeTransformation ],
-		response: [ DecodeTransformation ]
+		response: [
+            DecodeTransformation,
+            // Cache response
+            function(response) {
+                if(response.cache) {
+                    APGateway.requestCache.set(response.origin, response);
+                }
+                return response;
+            }
+        ]
 	}
 };
 
 APGateway.create = function(options) {
 	return new APGateway(options);
 };
+
+APGateway.requestCache = new APCache("APRequestCache");
 
 /**
  * Methods
@@ -149,6 +384,15 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
+    
+    cache: function(active) {
+        if(typeof active === "boolean") {
+            this.config.cache = active;
+        } else {
+            return this.config.cache;
+        }
+        return this;
+    },
 	
 	copy: function() {
 		var gw = new APGateway(this.config);
@@ -203,6 +447,7 @@ extend(APGateway.prototype, {
 			options,
 			request,
 			promise,
+            requestKey,
 			$config = extend({}, this.config, {
 				url: copy(this.config.url), 
 				headers: copy(this.config.headers),
@@ -217,22 +462,43 @@ extend(APGateway.prototype, {
 		}
 		request = new APRequest(options);
 		
-		promise = request.send();
-		for(i=0; i<resTrans.length; i++) {
-			promise.then(resTrans[i]);
-		}
-		
-		if(this.silentFail()) {
-			promise.catch(function(e) { return; });
-		}
-		
-		return promise;
+        requestKey = request.method + "::" + request.fullUrl();
+        
+        if(this.config.cache) {
+            return APGateway.requestCache.get(requestKey).then(bind(this, function(value) {
+                if(value !== undefined) {
+                    var res = new APResponse();
+                    extend(res, value);
+                    return res;
+                } else {
+                    promise = request.send();
+                    for(i=0; i<resTrans.length; i++) {
+                        promise.then(resTrans[i]);
+                    }
+                    if(this.silentFail()) {
+                        promise.catch(function(e) { return; });
+                    }
+                    
+                    return promise;        
+                }
+            }));
+        } else {
+            promise = request.send();
+            for(i=0; i<resTrans.length; i++) {
+                promise.then(resTrans[i]);
+            }
+            if(this.silentFail()) {
+                promise.catch(function(e) { return; });
+            }
+            
+            return promise;
+        }
 	},
 	
 });
 
 module.exports = APGateway;
-},{"../parsers/formData":5,"../parsers/json":6,"../parsers/xml":13,"../request/APRequest":7,"../utils/bind":14,"../utils/copy":15,"../utils/extend":16,"./transformations/decode":3,"./transformations/encode":4,"url":12}],3:[function(require,module,exports){
+},{"../cache/APCache":2,"../parsers/formData":7,"../parsers/json":8,"../parsers/xml":15,"../request/APRequest":9,"../response/APResponse":10,"../utils/bind":16,"../utils/copy":17,"../utils/extend":18,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":20,"url":14}],5:[function(require,module,exports){
 "use strict";
 
 function decode(response) {
@@ -250,7 +516,7 @@ function decode(response) {
 }
 
 module.exports = decode;
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 
 function encode(request) {
@@ -288,7 +554,7 @@ function encode(request) {
 
 
 module.exports = encode;
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 
 function encodeToFormData(data) {
@@ -317,7 +583,7 @@ module.exports = {
 		return data;
 	}
 };
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -334,10 +600,10 @@ module.exports = {
 		return parsed;
 	}
 };
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 
-var Es6Promise	= require("native-promise-only");
+var Es6Promise	    = require("native-promise-only");
 var http			= require("http");
 
 var extend			= require("../utils/extend");
@@ -355,11 +621,25 @@ function APRequest(options) {
 /**
  * Methods
  */
-extend(APRequest.prototype, {	
-	send: function() {
-		var path = (this.url.pathname) ? this.url.pathname : "";
+extend(APRequest.prototype, {
+    urlPath: function() {
+        var path = (this.url.pathname) ? this.url.pathname : "";
 		path += (this.url.search) ? this.url.search : "";
 		path += (this.url.hash) ? this.url.hash : "";
+        return path;
+    },
+    
+    fullUrl: function() {
+        var url = this.url.protocol + "//" + this.url.hostname;
+        if(this.url.port !== null && this.url.port !== undefined && this.url.port !== "") {
+            url += ":" + this.url.port;
+        }
+        url += this.urlPath();
+        return url;
+    },
+    
+	send: function() {
+        var path = this.urlPath();
 		
 		var headers = copy(this.headers);
 		if(typeof this.contentType === "string") {
@@ -383,8 +663,9 @@ extend(APRequest.prototype, {
 				
 				res.on("end", function() {
 					// Create APResponse and finish
-					var apResponse = new APResponse(res, self.dataType, data);
+					var apResponse = new APResponse(res, self.dataType, data, self.cache);
 					apResponse.parsers = self.parsers;
+                    apResponse.origin = self.method + "::" + self.fullUrl();
 					resolve(apResponse);
 				});
 			});
@@ -403,17 +684,17 @@ extend(APRequest.prototype, {
 });
 
 module.exports = APRequest;
-},{"../response/APResponse":8,"../utils/bind":14,"../utils/copy":15,"../utils/extend":16,"http":11,"native-promise-only":18}],8:[function(require,module,exports){
+},{"../response/APResponse":10,"../utils/bind":16,"../utils/copy":17,"../utils/extend":18,"http":13,"native-promise-only":20}],10:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
 
-function APResponse(response, dataType, data) {
+function APResponse(response, dataType, data, cache) {
 	extend(
 		this,
 		APResponse.defaults,
 		response,
-		{ data: data, contentType: dataType }
+		{ data: data, contentType: dataType, cache: cache }
 	);
 }
 
@@ -421,11 +702,12 @@ APResponse.defaults = {
 	statusCode: 0,
 	statusMessage: "",
 	data: {},
-	headers: {}
+	headers: {},
+    cache: false
 };
 
 module.exports = APResponse;
-},{"../utils/extend":16}],9:[function(require,module,exports){
+},{"../utils/extend":18}],11:[function(require,module,exports){
 "use strict";
 
 var extend			= require("../../utils/extend");
@@ -486,7 +768,7 @@ extend(HttpRequest.prototype, {
 		}
 		
 		xhr.open(this.method, this.url, true);
-		
+        
 		if(typeof this.headers === "object") {
 			for(var key in this.headers) {
 				if(this.headers.hasOwnProperty(key)) {
@@ -541,7 +823,7 @@ extend(HttpRequest.prototype, {
 
 
 module.exports = HttpRequest;
-},{"../../utils/bind":14,"../../utils/copy":15,"../../utils/extend":16,"./HttpResponse":10,"tiny-emitter":19}],10:[function(require,module,exports){
+},{"../../utils/bind":16,"../../utils/copy":17,"../../utils/extend":18,"./HttpResponse":12,"tiny-emitter":21}],12:[function(require,module,exports){
 "use strict";
 
 var extend		= require("../../utils/extend");
@@ -581,7 +863,7 @@ extend(HttpResponse.prototype, {
 });
 
 module.exports = HttpResponse;
-},{"../../utils/extend":16,"tiny-emitter":19}],11:[function(require,module,exports){
+},{"../../utils/extend":18,"tiny-emitter":21}],13:[function(require,module,exports){
 "use strict";
 
 var bind 			= require("../../utils/bind");
@@ -602,7 +884,7 @@ extend(Http, {
 });
 
 module.exports = Http;
-},{"../../utils/bind":14,"../../utils/extend":16,"./HttpRequest":9}],12:[function(require,module,exports){
+},{"../../utils/bind":16,"../../utils/extend":18,"./HttpRequest":11}],14:[function(require,module,exports){
 "use strict";
 
 var Url = {
@@ -627,7 +909,7 @@ var Url = {
 
 
 module.exports = Url;
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -659,7 +941,7 @@ module.exports = {
 	}
 		
 };
-},{}],14:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 
 module.exports = function bind(context, fn) {
@@ -669,7 +951,7 @@ module.exports = function bind(context, fn) {
 		};
 	}
 };
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 
 module.exports = function copy(src) {
@@ -688,7 +970,7 @@ module.exports = function copy(src) {
 	}
 	return copied;
 };
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
@@ -710,13 +992,13 @@ module.exports = function extend() {
 	
 	return dest;
 };
-},{"./toArray":17}],17:[function(require,module,exports){
+},{"./toArray":19}],19:[function(require,module,exports){
 "use strict";
 
 module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -1093,7 +1375,7 @@ module.exports = function toArray(arr) {
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 function E () {
 	// Keep this empty so it's easier to inherit from
   // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)

@@ -9,7 +9,8 @@
   "browser": {
     "http": "./lib/shims/http/http.js",
     "url": "./lib/shims/url/url.js",
-    "./lib/parsers/xml": "./lib/shims/xml/xml.js"
+    "./lib/parsers/xml": "./lib/shims/xml/xml.js",
+    "./lib/cache/persistence/APMemoryStorage": "./lib/cache/persistence/APBrowserStorage"
   },
   "author": "AnyPresence",
   "license": "MIT",

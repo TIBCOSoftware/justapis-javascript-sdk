@@ -55,8 +55,11 @@ describe("APGateway", function() {
 	beforeEach(function() {
 		gateway = new APGateway();
 		gateway.contentType("application/json");
+        gateway.cache(false);
+        
 		server = sinon.fakeServer.create();
 		initServer(server);
+        server.autoRespond = true;
 	});
 	
 	afterEach(function() {
@@ -212,7 +215,8 @@ describe("APGateway", function() {
 	it("should apply request/response transformations", function(done) {
 		var encode = gateway.requestTransformations()[0];
 		var decode = gateway.responseTransformations()[0];
-		
+        var caching = gateway.responseTransformations()[1];
+        
 		gateway
 			.url("/people")
 			.method("POST")
@@ -233,7 +237,8 @@ describe("APGateway", function() {
 				function(res) {
 					res.data.HELLO = "WORLD!";
 					return res;
-				}
+				},
+                caching
 			])
 			.execute().should.eventually.satisfy(function(response) {
 				var data = response.data;
