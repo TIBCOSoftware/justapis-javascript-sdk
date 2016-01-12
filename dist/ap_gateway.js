@@ -139,7 +139,7 @@ extend(APCache.prototype, {
 
 
 module.exports = APCache;
-},{"../utils/bind":16,"../utils/extend":18,"./persistence/APMemoryStorage":3,"native-promise-only":20}],3:[function(require,module,exports){
+},{"../utils/bind":17,"../utils/extend":19,"./persistence/APMemoryStorage":3,"native-promise-only":21}],3:[function(require,module,exports){
 "use strict";
 
 var Es6Promise  = require("native-promise-only");
@@ -228,7 +228,7 @@ extend(APBrowserStorage.prototype, {
 });
 
 module.exports = new APBrowserStorage();
-},{"../../utils/bind":16,"../../utils/extend":18,"native-promise-only":20}],4:[function(require,module,exports){
+},{"../../utils/bind":17,"../../utils/extend":19,"native-promise-only":21}],4:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	            = require("native-promise-only");
@@ -244,6 +244,7 @@ var XMLParser				= require("../parsers/xml");
 var FormDataParser			= require("../parsers/formData");
 var EncodeTransformation	= require("./transformations/encode");
 var DecodeTransformation	= require("./transformations/decode");
+var hpkp                    = require("../hpkp/hpkp");
 
 
 function APGateway(options) {
@@ -439,6 +440,12 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
+    
+    hpkp: function(options) {
+        var header = hpkp(options.sha256s, options.maxAge, options.includeSubdomains, options.reportOnly, options.reportUri);
+        this.headers(header);
+        return this;
+    },
 	
 	execute: function() {
 		var i;
@@ -498,7 +505,7 @@ extend(APGateway.prototype, {
 });
 
 module.exports = APGateway;
-},{"../cache/APCache":2,"../parsers/formData":7,"../parsers/json":8,"../parsers/xml":15,"../request/APRequest":9,"../response/APResponse":10,"../utils/bind":16,"../utils/copy":17,"../utils/extend":18,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":20,"url":14}],5:[function(require,module,exports){
+},{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":16,"../request/APRequest":10,"../response/APResponse":11,"../utils/bind":17,"../utils/copy":18,"../utils/extend":19,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":21,"url":15}],5:[function(require,module,exports){
 "use strict";
 
 function decode(response) {
@@ -557,6 +564,59 @@ module.exports = encode;
 },{}],7:[function(require,module,exports){
 "use strict";
 
+function validateArguments(sha256s, maxAge, includeSubdomains, reportOnly, reportUri) {
+    if(!sha256s ||  !(sha256s instanceof Array) || sha256s.length < 2) {
+        return false;
+    }
+    if(!maxAge) {
+        return false;
+    }
+    if(!!reportOnly && (!reportUri || typeof reportUri !== "string" || reportUri === "")) {
+        return false;
+    }
+    return true;
+}
+
+function headerName(reportOnly) {
+    var name = "Public-Key-Pins";
+    if(reportOnly) {
+        name += "-Report-Only";
+    }
+    return name;
+}
+
+function headerValue(sha256s, maxAge, includeSubdomains, reportUri) {
+    var values = [];
+    for(var i=0 ; i < sha256s.length ; i++) {
+        values.push('pin-sha256="' + sha256s[i] + '"');
+    }
+    
+    values.push('max-age=' + Math.round(maxAge));
+    
+    if(!!includeSubdomains) {
+        values.push('includeSubdomains');
+    }
+    
+    if(reportUri) {
+        values.push('report-uri="' + reportUri + '"');
+    }
+    
+    return values.join('; ');
+}
+
+module.exports = function hpkp(sha256s, maxAge, includeSubdomains, reportOnly, reportUri) {
+    if(validateArguments(sha256s, maxAge, includeSubdomains, reportOnly, reportUri)) {
+        var headerName = headerName(reportOnly);
+        var headerValue = headerValue(sha256s, maxAge, includeSubdomains, reportUri);
+        var header = {};
+        header[headerName] = headerValue;
+        return header;
+    }
+    return {};
+};
+},{}],8:[function(require,module,exports){
+"use strict";
+
 function encodeToFormData(data) {
 	var urlEncodedData = "", urlEncodedDataPairs = [];
 	
@@ -583,7 +643,7 @@ module.exports = {
 		return data;
 	}
 };
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -600,7 +660,7 @@ module.exports = {
 		return parsed;
 	}
 };
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	    = require("native-promise-only");
@@ -684,7 +744,7 @@ extend(APRequest.prototype, {
 });
 
 module.exports = APRequest;
-},{"../response/APResponse":10,"../utils/bind":16,"../utils/copy":17,"../utils/extend":18,"http":13,"native-promise-only":20}],10:[function(require,module,exports){
+},{"../response/APResponse":11,"../utils/bind":17,"../utils/copy":18,"../utils/extend":19,"http":14,"native-promise-only":21}],11:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
@@ -707,7 +767,7 @@ APResponse.defaults = {
 };
 
 module.exports = APResponse;
-},{"../utils/extend":18}],11:[function(require,module,exports){
+},{"../utils/extend":19}],12:[function(require,module,exports){
 "use strict";
 
 var extend			= require("../../utils/extend");
@@ -823,7 +883,7 @@ extend(HttpRequest.prototype, {
 
 
 module.exports = HttpRequest;
-},{"../../utils/bind":16,"../../utils/copy":17,"../../utils/extend":18,"./HttpResponse":12,"tiny-emitter":21}],12:[function(require,module,exports){
+},{"../../utils/bind":17,"../../utils/copy":18,"../../utils/extend":19,"./HttpResponse":13,"tiny-emitter":22}],13:[function(require,module,exports){
 "use strict";
 
 var extend		= require("../../utils/extend");
@@ -863,7 +923,7 @@ extend(HttpResponse.prototype, {
 });
 
 module.exports = HttpResponse;
-},{"../../utils/extend":18,"tiny-emitter":21}],13:[function(require,module,exports){
+},{"../../utils/extend":19,"tiny-emitter":22}],14:[function(require,module,exports){
 "use strict";
 
 var bind 			= require("../../utils/bind");
@@ -884,7 +944,7 @@ extend(Http, {
 });
 
 module.exports = Http;
-},{"../../utils/bind":16,"../../utils/extend":18,"./HttpRequest":11}],14:[function(require,module,exports){
+},{"../../utils/bind":17,"../../utils/extend":19,"./HttpRequest":12}],15:[function(require,module,exports){
 "use strict";
 
 var Url = {
@@ -909,7 +969,7 @@ var Url = {
 
 
 module.exports = Url;
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -941,7 +1001,7 @@ module.exports = {
 	}
 		
 };
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 
 module.exports = function bind(context, fn) {
@@ -951,7 +1011,7 @@ module.exports = function bind(context, fn) {
 		};
 	}
 };
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 
 module.exports = function copy(src) {
@@ -970,7 +1030,7 @@ module.exports = function copy(src) {
 	}
 	return copied;
 };
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
@@ -992,13 +1052,13 @@ module.exports = function extend() {
 	
 	return dest;
 };
-},{"./toArray":19}],19:[function(require,module,exports){
+},{"./toArray":20}],20:[function(require,module,exports){
 "use strict";
 
 module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -1375,7 +1435,7 @@ module.exports = function toArray(arr) {
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 function E () {
 	// Keep this empty so it's easier to inherit from
   // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
