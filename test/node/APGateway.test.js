@@ -40,7 +40,9 @@ describe("APGateway", function() {
 	beforeEach(function() {
 		$request = sinon.stub(http, 'request');
 		gateway = new APGateway();
-		gateway.contentType("application/json");
+		gateway
+            .contentType("application/json")
+            .cache(false);
 	});
 	
 	afterEach(function() {

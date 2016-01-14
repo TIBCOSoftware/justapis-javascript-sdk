@@ -5,6 +5,7 @@ var chai			= require("chai");
 var chaiAsPromised	= require("chai-as-promised");
 var sinon			= require("sinon");
 var APGateway		= require("../../index.js");
+var Es6Promise      = require("native-promise-only");
 
 chai.use(chaiAsPromised);
 
@@ -59,7 +60,7 @@ describe("APGateway", function() {
         
 		server = sinon.fakeServer.create();
 		initServer(server);
-        server.autoRespond = true;
+        server.respondImmediately = true;
 	});
 	
 	afterEach(function() {
@@ -167,7 +168,6 @@ describe("APGateway", function() {
 			})
 			.and.notify(done);
 			
-		server.respond();
 	});
 	
 	it("should send POST requests to the server", function(done) {
@@ -180,7 +180,6 @@ describe("APGateway", function() {
 			})
 			.and.notify(done);
 			
-		server.respond();
 	});
 	
 	it("should send PUT requests to the server", function(done) {
@@ -190,7 +189,6 @@ describe("APGateway", function() {
 			.data({ name: "James", age: 34 })
 			.execute().should.eventually.be.fulfilled.and.notify(done);
 			
-		server.respond();
 	});
 	
 	it("should send PATCH requests to the server", function(done) {
@@ -200,7 +198,6 @@ describe("APGateway", function() {
 			.data({ name: "Joan" })
 			.execute().should.eventually.be.fulfilled.and.notify(done);
 			
-		server.respond();
 	});
 	
 	it("should send DELETE requests to the server", function(done) {
@@ -209,7 +206,6 @@ describe("APGateway", function() {
 			.method("DELETE")
 			.execute().should.eventually.be.fulfilled.and.notify(done);
 			
-		server.respond();
 	});
 	
 	it("should apply request/response transformations", function(done) {
@@ -246,7 +242,57 @@ describe("APGateway", function() {
 			})
 			.and.notify(done);
 		
-		server.respond();
 	});
+    
+    it("should cache GET requests", function(done) {
+       gateway
+            .cache(true)
+            .method("GET")
+            .url("/people")
+            .data({ name: "Ron", age: 50 })
+            .execute()
+            .then(function(firstResponse) {
+               server.restore();
+               gateway.execute().then(function(secondResponse) {
+                  delete firstResponse.parsers;
+                  delete secondResponse.parsers;
+                  firstResponse.statusCode.should.equal(secondResponse.statusCode);
+                  firstResponse.data.should.eql(secondResponse.data);
+                  firstResponse.headers.should.eql(secondResponse.headers);
+                  gateway.cache(false);
+                  done();
+               });
+            });
+            
+    });
+    
+    it("should queue requests", function(done) {
+       server.respondImmediately = true;
+       gateway.Queue.pause();
+       APGateway.RequestCache.flush();
+       
+       gateway.cache(false).method("GET").url("/people");
+       
+       var promises = [
+           gateway.execute(),
+           gateway.execute(),
+           gateway.execute(),
+           gateway.execute(),
+           gateway.execute(),
+           gateway.execute()
+       ];
+       
+       expect(gateway.Queue.messages.length).to.equal(6);
+       
+       gateway.Queue.throttleBy(100);
+       
+       Es6Promise.all(promises).then(function() {
+           expect(gateway.Queue.messages.length).to.equal(0);
+           done();
+       });
+       
+       gateway.Queue.resume();
+       
+    });
 	
 });

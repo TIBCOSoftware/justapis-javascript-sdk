@@ -37,7 +37,7 @@ APCache.defaults = {
            var fullValue = { value: value, timestamp: (new Date()).toJSON() };
            return this.storage.set(serialized, fullValue);
        }
-       return new Es6Promise(function(resolve, reject) { resolve(undefined); }); 
+       return Es6Promise.resolve(undefined);
    },
    
    get: function(key) {
@@ -48,7 +48,7 @@ APCache.defaults = {
                return (isAlive) ? record.value : undefined;
            }));
        }
-       return new Es6Promise(function(resolve, reject) { resolve(undefined); });
+       return Es6Promise.resolve(undefined);
    },
    
    getAll: function() {
@@ -74,7 +74,7 @@ APCache.defaults = {
            var serialized = this.cacheKey(key);
            return this.storage.remove(serialized);
        }
-       return new Es6Promise(function(resolve, reject) { resolve(undefined); });
+       return Es6Promise.resolve(undefined);
    },
    
    checkTTL: function(record) {
@@ -139,7 +139,7 @@ extend(APCache.prototype, {
 
 
 module.exports = APCache;
-},{"../utils/bind":17,"../utils/extend":19,"./persistence/APMemoryStorage":3,"native-promise-only":21}],3:[function(require,module,exports){
+},{"../utils/bind":20,"../utils/extend":22,"./persistence/APMemoryStorage":3,"native-promise-only":24}],3:[function(require,module,exports){
 "use strict";
 
 var Es6Promise  = require("native-promise-only");
@@ -218,7 +218,6 @@ extend(APBrowserStorage.prototype, {
    flush: function(prefix) {
        return new Es6Promise(bind(this, function(resolve) {
             var keys = this.keysWithPrefix(prefix);
-            console.log(keys);
             for(var i=0 ; i < keys.length ; i++) {
                 this.remove(keys[i]);
             }
@@ -228,7 +227,7 @@ extend(APBrowserStorage.prototype, {
 });
 
 module.exports = new APBrowserStorage();
-},{"../../utils/bind":17,"../../utils/extend":19,"native-promise-only":21}],4:[function(require,module,exports){
+},{"../../utils/bind":20,"../../utils/extend":22,"native-promise-only":24}],4:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	            = require("native-promise-only");
@@ -236,6 +235,7 @@ var Url						= require("url");
 var APRequest 				= require("../request/APRequest");
 var APResponse              = require("../response/APResponse");
 var APCache                 = require("../cache/APCache");
+var APQueue                 = require("../queue/APQueue");
 var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
 var copy					= require("../utils/copy");
@@ -270,6 +270,8 @@ function APGateway(options) {
 	} else {
 		extend(this.config, options);
 	}
+    
+    this.Queue = new APQueue();
 }
 
 /**
@@ -303,8 +305,8 @@ APGateway.defaults = {
             DecodeTransformation,
             // Cache response
             function(response) {
-                if(response.cache) {
-                    APGateway.requestCache.set(response.origin, response);
+                if(response.cache && response.origin.method === "GET") {
+                    APGateway.RequestCache.set(response.origin.url, response);
                 }
                 return response;
             }
@@ -316,7 +318,7 @@ APGateway.create = function(options) {
 	return new APGateway(options);
 };
 
-APGateway.requestCache = new APCache("APRequestCache");
+APGateway.RequestCache = new APCache("APRequestCache");
 
 /**
  * Methods
@@ -450,10 +452,8 @@ extend(APGateway.prototype, {
 	execute: function() {
 		var i;
 		var reqTrans = this.config.transformations.request, 
-			resTrans = this.config.transformations.response, 
 			options,
 			request,
-			promise,
             requestKey,
 			$config = extend({}, this.config, {
 				url: copy(this.config.url), 
@@ -469,43 +469,43 @@ extend(APGateway.prototype, {
 		}
 		request = new APRequest(options);
 		
-        requestKey = request.method + "::" + request.fullUrl();
+        requestKey = request.fullUrl();
         
-        if(this.config.cache) {
-            return APGateway.requestCache.get(requestKey).then(bind(this, function(value) {
+        if(this.config.cache && request.method === "GET") {
+            return APGateway.RequestCache.get(requestKey).then(bind(this, function(value) {
                 if(value !== undefined) {
                     var res = new APResponse();
                     extend(res, value);
                     return res;
                 } else {
-                    promise = request.send();
-                    for(i=0; i<resTrans.length; i++) {
-                        promise.then(resTrans[i]);
-                    }
-                    if(this.silentFail()) {
-                        promise.catch(function(e) { return; });
-                    }
-                    
-                    return promise;        
+                    return this.sendRequest(request);
                 }
             }));
         } else {
-            promise = request.send();
-            for(i=0; i<resTrans.length; i++) {
-                promise.then(resTrans[i]);
-            }
-            if(this.silentFail()) {
-                promise.catch(function(e) { return; });
-            }
-            
-            return promise;
+            return this.sendRequest(request);
         }
 	},
-	
+    
+    sendRequest: function(request) {
+        var self = this;
+        return new Es6Promise(function(resolve, reject) {
+            self.Queue.queue(request).on("dispatch", function(req) {
+                var responseTransformations = self.responseTransformations();
+                var promise = req.send();
+                for(var i=0; i<responseTransformations.length; i++) {
+                    promise.then(responseTransformations[i]);
+                }
+                if(self.silentFail()) {
+                    promise.catch(function(e) { return; });
+                }
+                resolve(promise);
+            });
+        });
+    }
 });
 
 module.exports = APGateway;
-},{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":16,"../request/APRequest":10,"../response/APResponse":11,"../utils/bind":17,"../utils/copy":18,"../utils/extend":19,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":21,"url":15}],5:[function(require,module,exports){
+},{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
 function decode(response) {
@@ -547,7 +547,7 @@ function encode(request) {
 					paramArray.push(key+"="+request.data[key]); 
 				}
 			}
-			params = paramArray.join("&");
+			params = paramArray.sort().join("&");
 		}
 		if(params !== "") {
 			params = "?"+params;
@@ -663,6 +663,86 @@ module.exports = {
 },{}],10:[function(require,module,exports){
 "use strict";
 
+var EventEmitter 	= require("tiny-emitter");
+var extend          = require("../utils/extend");
+var bind            = require("../utils/bind");
+var Interval        = require("../utils/Interval");
+var APQueueMessage  = require("./APQueueMessage");
+
+function APQueue() {
+    this.active = true;
+    this.messages = [];
+    this.dequeueLoop = null;
+    this.throttleDequeueBy = 400;
+}
+
+extend(APQueue.prototype, {
+    
+    queue: function(element) {
+        var message = new APQueueMessage(element);
+        this.messages.push(message);
+        
+        if(this.active && this.messages.length === 1) {
+            this.dequeue();
+        }
+        
+        return message;
+    },
+    
+    dequeue: function() {
+        if(this.dequeueLoop === null) {
+            this.dequeueLoop = new Interval(bind(this, function() {
+                if(this.active && this.messages.length > 0) {
+                    var message = this.messages.shift();
+                    message.emit("dispatch", message.content);
+                } else {
+                    this.dequeueLoop.cancel();
+                }
+            }), this.throttleDequeueBy, undefined);
+        }
+        return this;
+    },
+    
+    pause: function() {
+        this.active = false;
+        return this;
+    },
+    
+    resume: function() {
+        this.active = true;
+        this.dequeue();
+        return this;
+    },
+    
+    throttleBy: function(milliseconds) {
+        if(typeof milliseconds === "number") {
+            this.throttleDequeueBy = milliseconds;
+        }
+        return this;
+    }
+    
+});
+
+module.exports = APQueue;
+
+
+},{"../utils/Interval":19,"../utils/bind":20,"../utils/extend":22,"./APQueueMessage":11,"tiny-emitter":25}],11:[function(require,module,exports){
+"use strict";
+
+var EventEmitter 	= require("tiny-emitter");
+var extend          = require("../utils/extend");
+
+function APQueueMessage(content) {
+    this.content = content;
+}
+
+APQueueMessage.prototype = new EventEmitter();
+APQueueMessage.prototype.constructor = APQueueMessage;
+
+module.exports = APQueueMessage;
+},{"../utils/extend":22,"tiny-emitter":25}],12:[function(require,module,exports){
+"use strict";
+
 var Es6Promise	    = require("native-promise-only");
 var http			= require("http");
 
@@ -725,7 +805,7 @@ extend(APRequest.prototype, {
 					// Create APResponse and finish
 					var apResponse = new APResponse(res, self.dataType, data, self.cache);
 					apResponse.parsers = self.parsers;
-                    apResponse.origin = self.method + "::" + self.fullUrl();
+                    apResponse.origin = { method: self.method, url: self.fullUrl() };
 					resolve(apResponse);
 				});
 			});
@@ -744,7 +824,7 @@ extend(APRequest.prototype, {
 });
 
 module.exports = APRequest;
-},{"../response/APResponse":11,"../utils/bind":17,"../utils/copy":18,"../utils/extend":19,"http":14,"native-promise-only":21}],11:[function(require,module,exports){
+},{"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"http":16,"native-promise-only":24}],13:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
@@ -767,7 +847,7 @@ APResponse.defaults = {
 };
 
 module.exports = APResponse;
-},{"../utils/extend":19}],12:[function(require,module,exports){
+},{"../utils/extend":22}],14:[function(require,module,exports){
 "use strict";
 
 var extend			= require("../../utils/extend");
@@ -789,6 +869,7 @@ function HttpRequest(options) {
 }
 
 HttpRequest.prototype = new EventEmitter();
+HttpRequest.prototype.constructor = HttpRequest;
 
 /**
  * Static
@@ -883,7 +964,7 @@ extend(HttpRequest.prototype, {
 
 
 module.exports = HttpRequest;
-},{"../../utils/bind":17,"../../utils/copy":18,"../../utils/extend":19,"./HttpResponse":13,"tiny-emitter":22}],13:[function(require,module,exports){
+},{"../../utils/bind":20,"../../utils/copy":21,"../../utils/extend":22,"./HttpResponse":15,"tiny-emitter":25}],15:[function(require,module,exports){
 "use strict";
 
 var extend		= require("../../utils/extend");
@@ -901,6 +982,7 @@ function HttpResponse(xhr) {
 }
 
 HttpResponse.prototype = new EventEmitter();
+HttpResponse.prototype.constructor = HttpResponse;
 
 extend(HttpResponse.prototype, {
 	parseHeaders: function (headerStr) {
@@ -923,7 +1005,7 @@ extend(HttpResponse.prototype, {
 });
 
 module.exports = HttpResponse;
-},{"../../utils/extend":19,"tiny-emitter":22}],14:[function(require,module,exports){
+},{"../../utils/extend":22,"tiny-emitter":25}],16:[function(require,module,exports){
 "use strict";
 
 var bind 			= require("../../utils/bind");
@@ -944,7 +1026,7 @@ extend(Http, {
 });
 
 module.exports = Http;
-},{"../../utils/bind":17,"../../utils/extend":19,"./HttpRequest":12}],15:[function(require,module,exports){
+},{"../../utils/bind":20,"../../utils/extend":22,"./HttpRequest":14}],17:[function(require,module,exports){
 "use strict";
 
 var Url = {
@@ -969,7 +1051,7 @@ var Url = {
 
 
 module.exports = Url;
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -1001,7 +1083,36 @@ module.exports = {
 	}
 		
 };
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+"use strict";
+
+function Interval(func, wait, times) {
+    var timeout = null;
+    var interv = function(w, t){
+        return function(){
+            if(typeof t === "undefined" || t-- > 0){
+                try{
+                    func.call(null);
+                }
+                catch(e){
+                    t = 0;
+                    throw e.toString();
+                }
+                timeout = setTimeout(interv, w);
+            }
+        };
+    }(wait, times);
+    
+    this.cancel = function() {
+        clearTimeout(timeout);
+    };
+
+    timeout = setTimeout(interv, wait);
+    
+}
+
+module.exports = Interval;
+},{}],20:[function(require,module,exports){
 "use strict";
 
 module.exports = function bind(context, fn) {
@@ -1011,7 +1122,7 @@ module.exports = function bind(context, fn) {
 		};
 	}
 };
-},{}],18:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 
 module.exports = function copy(src) {
@@ -1030,7 +1141,7 @@ module.exports = function copy(src) {
 	}
 	return copied;
 };
-},{}],19:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
@@ -1052,13 +1163,13 @@ module.exports = function extend() {
 	
 	return dest;
 };
-},{"./toArray":20}],20:[function(require,module,exports){
+},{"./toArray":23}],23:[function(require,module,exports){
 "use strict";
 
 module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
-},{}],21:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -1435,7 +1546,7 @@ module.exports = function toArray(arr) {
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],22:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 function E () {
 	// Keep this empty so it's easier to inherit from
   // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
