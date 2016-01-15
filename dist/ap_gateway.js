@@ -489,7 +489,7 @@ extend(APGateway.prototype, {
     sendRequest: function(request) {
         var self = this;
         return new Es6Promise(function(resolve, reject) {
-            self.Queue.queue(request).on("dispatch", function(req) {
+            self.Queue.queue(request, function(req) {
                 var responseTransformations = self.responseTransformations();
                 var promise = req.send();
                 for(var i=0; i<responseTransformations.length; i++) {
@@ -673,13 +673,17 @@ function APQueue() {
     this.active = true;
     this.messages = [];
     this.dequeueLoop = null;
-    this.throttleDequeueBy = 400;
+    this.throttleDequeueBy = 300;
 }
 
 extend(APQueue.prototype, {
     
-    queue: function(element) {
+    queue: function(element, fn) {
         var message = new APQueueMessage(element);
+        if(typeof fn === "function") {
+            message.on("dispatch", fn);
+        }
+        
         this.messages.push(message);
         
         if(this.active && this.messages.length === 1) {
@@ -697,8 +701,9 @@ extend(APQueue.prototype, {
                     message.emit("dispatch", message.content);
                 } else {
                     this.dequeueLoop.cancel();
+                    this.dequeueLoop = null;
                 }
-            }), this.throttleDequeueBy, undefined);
+            }), this.throttleDequeueBy, undefined, true);
         }
         return this;
     },
@@ -1086,8 +1091,11 @@ module.exports = {
 },{}],19:[function(require,module,exports){
 "use strict";
 
-function Interval(func, wait, times) {
-    var timeout = null;
+function Interval(func, wait, times, immediate) {
+    this.timeout = null;
+    this.canceled = false;
+    var self = this;
+    
     var interv = function(w, t){
         return function(){
             if(typeof t === "undefined" || t-- > 0){
@@ -1098,16 +1106,26 @@ function Interval(func, wait, times) {
                     t = 0;
                     throw e.toString();
                 }
-                timeout = setTimeout(interv, w);
+                if(!self.canceled) {
+                    self.timeout = setTimeout(interv, w);
+                }
             }
         };
     }(wait, times);
     
     this.cancel = function() {
-        clearTimeout(timeout);
+        this.canceled = true;
+        clearTimeout(this.timeout);
     };
+    
+    this.timeout = setTimeout(interv, wait);
+    
+    if(!!immediate) {
+        interv();
+    } else {
+        this.timeout = setTimeout(interv, wait);
+    } 
 
-    timeout = setTimeout(interv, wait);
     
 }
 

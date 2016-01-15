@@ -54,6 +54,7 @@ function initServer(server) {
 describe("APGateway", function() {
 	var server, gateway;
 	beforeEach(function() {
+        APGateway.RequestCache.flush();
 		gateway = new APGateway();
 		gateway.contentType("application/json");
         gateway.cache(false);
@@ -267,7 +268,6 @@ describe("APGateway", function() {
     });
     
     it("should queue requests", function(done) {
-       server.respondImmediately = true;
        gateway.Queue.pause();
        APGateway.RequestCache.flush();
        
