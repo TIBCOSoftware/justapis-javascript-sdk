@@ -271,54 +271,61 @@ function APGateway(options) {
 		extend(this.config, options);
 	}
     
-    this.Queue = new APQueue();
 }
 
 /**
  * Static
  */
-APGateway.defaults = {
-	url: {
-		href: "http://localhost:5000",
-		protocol: "http:",			
-		hostname: "localhost",
-		port: "5000",
-		pathname: "/",
-		search: null,
-		hash: null
-	},
-	method: "GET",
-	silentFail: true,
-    cache: true,
-	dataType: "json",
-	contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-	data: {},
-	headers: {},
-	parsers: {
-		json: JSONParser,
-		form: FormDataParser,
-		xml: XMLParser
-	},
-	transformations: {
-		request: [ EncodeTransformation ],
-		response: [
-            DecodeTransformation,
-            // Cache response
-            function(response) {
-                if(response.cache && response.origin.method === "GET") {
-                    APGateway.RequestCache.set(response.origin.url, response);
+extend(APGateway, {
+    create: function(options) {
+        return new APGateway(options);
+    },
+    
+    RequestCache: new APCache("APRequestCache"),
+    
+    Queue: new APQueue(),
+    
+    APRequest: APRequest,
+    
+    APResponse: APResponse,
+    
+    defaults: {
+        url: {
+            href: "http://localhost:5000",
+            protocol: "http:",			
+            hostname: "localhost",
+            port: "5000",
+            pathname: "/",
+            search: null,
+            hash: null
+        },
+        method: "GET",
+        silentFail: true,
+        cache: true,
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        data: {},
+        headers: {},
+        parsers: {
+            json: JSONParser,
+            form: FormDataParser,
+            xml: XMLParser
+        },
+        transformations: {
+            request: [ EncodeTransformation ],
+            response: [
+                DecodeTransformation,
+                // Cache response
+                function(response) {
+                    if(response.cache && response.origin.method === "GET") {
+                        APGateway.RequestCache.set(response.origin.url, response);
+                    }
+                    return response;
                 }
-                return response;
-            }
-        ]
-	}
-};
-
-APGateway.create = function(options) {
-	return new APGateway(options);
-};
-
-APGateway.RequestCache = new APCache("APRequestCache");
+            ]
+        }
+    }
+});
 
 /**
  * Methods
@@ -489,7 +496,7 @@ extend(APGateway.prototype, {
     sendRequest: function(request) {
         var self = this;
         return new Es6Promise(function(resolve, reject) {
-            self.Queue.queue(request, function(req) {
+            APGateway.Queue.queue(request, function(req) {
                 var responseTransformations = self.responseTransformations();
                 var promise = req.send();
                 for(var i=0; i<responseTransformations.length; i++) {
@@ -724,6 +731,18 @@ extend(APQueue.prototype, {
             this.throttleDequeueBy = milliseconds;
         }
         return this;
+    },
+    
+    export: function() {
+        if(!this.active) {
+            var len = this.messages.length;
+            var messages = [];
+            for(var i=0; i<len; i++) {
+                messages.push(this.messages[i].content);
+            }
+        } else {
+            throw new Error("APQueue must be paused to exportable");
+        }
     }
     
 });
@@ -1166,7 +1185,7 @@ var toArray = require("./toArray");
 
 module.exports = function extend() {
 	var args = toArray(arguments), dest = args[0], src;
-	if(typeof dest === "object") {
+	if(typeof dest === "object" || typeof dest === "function") {
 		for(var i=1; i<args.length; i++) {
 			src = args[i];
 			if(typeof src === "object") {

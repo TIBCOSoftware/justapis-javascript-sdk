@@ -279,7 +279,7 @@ describe("APGateway", function() {
     });
     
     it("should queue requests", function(done) {
-       gateway.Queue.pause();
+       APGateway.Queue.pause();
        APGateway.RequestCache.flush();
        
        gateway.cache(false).method("GET").url("/people");
@@ -291,9 +291,9 @@ describe("APGateway", function() {
            promises.push(gateway.execute());
        }
        
-       expect(gateway.Queue.messages.length).to.equal(6);
+       expect(APGateway.Queue.messages.length).to.equal(6);
        
-       gateway.Queue.resume();
+       APGateway.Queue.resume();
        done();
     });
 	
