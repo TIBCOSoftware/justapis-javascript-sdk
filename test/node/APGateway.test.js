@@ -8,6 +8,7 @@ var sinon			= require("sinon");
 var PassThrough		= require("stream").PassThrough;
 var http			= require("http");
 
+var Es6Promise      = require("native-promise-only");
 var APGateway		= require("../../index.js");
 
 chai.use(chaiAsPromised);
@@ -32,6 +33,20 @@ describe("APGateway", function() {
 	
 		$request.callsArgWith(1, response).returns(request);
 	}
+    
+    function multipleExpectation(expectedResponses) {
+        var request = new PassThrough();
+		
+        $write = sinon.spy(request, 'write');
+        
+        for(var i=0 ; i<expectedResponses.length ; i++) {
+            var response = new PassThrough();
+            response.write(JSON.stringify(expectedResponses[i]));
+            response.end();
+		    $request.onCall(i).callsArgWith(1, response).returns(request);
+        }
+	        
+    }
 	/**
 	 * End Helpers
 	 */
@@ -39,8 +54,11 @@ describe("APGateway", function() {
 	
 	beforeEach(function() {
 		$request = sinon.stub(http, 'request');
+        APGateway.RequestCache.flush();
 		gateway = new APGateway();
-		gateway.contentType("application/json");
+		gateway
+            .contentType("application/json")
+            .cache(false);
 	});
 	
 	afterEach(function() {
@@ -237,5 +255,46 @@ describe("APGateway", function() {
 			})
 			.and.notify(done);
 	});
+    
+    it("should cache GET requests", function(done) {
+       expectation({ foo: "bar" });
+       gateway
+            .cache(true)
+            .method("GET")
+            .url("http://www.example.com/some/test/route")
+            .data({ name: "Ron", age: 50 })
+            .execute()
+            .then(function(firstResponse) {
+               gateway.execute().then(function(secondResponse) {
+                  delete firstResponse.parsers;
+                  delete secondResponse.parsers;
+                  firstResponse.statusCode.should.equal(secondResponse.statusCode);
+                  firstResponse.data.should.eql(secondResponse.data);
+                  firstResponse.headers.should.eql(secondResponse.headers);
+                  gateway.cache(false);
+                  done();
+               });
+            });
+            
+    });
+    
+    it("should queue requests", function(done) {
+       APGateway.Queue.pause();
+       APGateway.RequestCache.flush();
+       
+       gateway.cache(false).method("GET").url("/people");
+       
+       expectation({ foo: "bar" });
+       
+       var promises = [];
+       for(var i=0 ; i<6 ; i++) {
+           promises.push(gateway.execute());
+       }
+       
+       expect(APGateway.Queue.messages.length).to.equal(6);
+       
+       APGateway.Queue.resume();
+       done();
+    });
 	
 });
