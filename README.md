@@ -19,12 +19,18 @@ Lightweight JavaScript SDK to connect to a JustAPIs gateway through a web client
 * Per-request caching
 * Pausable/Resumable asynchronous request queue
 
+##Install via NPM
+
+```bash
+$ npm install justapis-javascript-sdk
+```
+
 ##Setup
 
 The SDK is built with browserify. If you would like to add a single bundled file you can find it in the `dist` folder.
 
 ```html
-<script src="justapis-javascript-sdk/dist/ap_gateway.js"></script>
+<script src="justapis-javascript-sdk/dist/justapis-javascript-sdk-v0.1.0.js"></script>
 ```
 
 Else, if you are using browserify in your project you probably prefer to use `require` to load the dependency.
