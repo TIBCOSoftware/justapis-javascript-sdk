@@ -249,9 +249,9 @@ var hpkp                    = require("../hpkp/hpkp");
 
 function APGateway(options) {
 	this.config = {};
-	
+
 	extend(this.config, APGateway.defaults);
-	
+
 	this.config.url = copy(APGateway.defaults.url);
 	this.config.data = copy(APGateway.defaults.data);
 	this.config.headers = copy(APGateway.defaults.headers);
@@ -260,7 +260,7 @@ function APGateway(options) {
 		request: copy(APGateway.defaults.transformations.request),
 		response: copy(APGateway.defaults.transformations.response)
 	};
-	
+
 	if(options && typeof options.url === "string") {
 		var url = Url.parse(options.url);
 		var $config = extend({}, options);
@@ -270,7 +270,7 @@ function APGateway(options) {
 	} else {
 		extend(this.config, options);
 	}
-    
+
 }
 
 /**
@@ -280,21 +280,21 @@ extend(APGateway, {
     create: function(options) {
         return new APGateway(options);
     },
-    
+
     RequestCache: new APCache("APRequestCache"),
-    
+
     Queue: new APQueue(),
-    
+
     APRequest: APRequest,
-    
+
     APResponse: APResponse,
-    
-    Promise: Es6Promise, 
-    
+
+    Promise: Es6Promise,
+
     defaults: {
         url: {
             href: "http://localhost:5000",
-            protocol: "http:",			
+            protocol: "http:",
             hostname: "localhost",
             port: "5000",
             pathname: "/",
@@ -333,7 +333,7 @@ extend(APGateway, {
  * Methods
  */
 extend(APGateway.prototype, {
-	
+
 	url: function(url) {
 		if(url) {
 			if(typeof url === "string") {
@@ -341,11 +341,11 @@ extend(APGateway.prototype, {
 				this.config.url = $url;
 			}
 		} else {
-			return this.config.url.href; 
+			return this.config.url.href;
 		}
 		return this;
 	},
-	
+
 	method: function(method) {
 		if(method) {
 			if(typeof method === "string") {
@@ -356,7 +356,7 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
-	
+
 	data: function(data) {
 		if(data) {
 			this.config.data = data;
@@ -365,9 +365,9 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
-    
-    dataType: function(dataType) {
-        if(dataType) {
+
+  dataType: function(dataType) {
+    if(dataType) {
 			if(typeof dataType === "string") {
 				this.config.dataType = dataType;
 			}
@@ -375,8 +375,8 @@ extend(APGateway.prototype, {
 			return this.config.dataType;
 		}
 		return this;
-    },
-	
+  },
+
 	contentType: function(contentType) {
 		if(contentType) {
 			if(typeof contentType === "string") {
@@ -387,7 +387,7 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
-	
+
 	headers: function(headers) {
 		if(headers) {
 			if(typeof headers === "object") {
@@ -398,7 +398,7 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
-	
+
 	silentFail: function(silent) {
 		if(typeof silent === "boolean") {
 			this.config.silentFail = silent;
@@ -407,7 +407,7 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
-    
+
     cache: function(active) {
         if(typeof active === "boolean") {
             this.config.cache = active;
@@ -416,7 +416,7 @@ extend(APGateway.prototype, {
         }
         return this;
     },
-	
+
 	copy: function() {
 		var gw = new APGateway(this.config);
 		gw.headers(copy(this.headers()));
@@ -426,7 +426,7 @@ extend(APGateway.prototype, {
 		gw.responseTransformations(copy(this.config.transformations.response));
 		return gw;
 	},
-	
+
 	requestTransformations: function(transformations) {
 		if(transformations) {
 			if(transformations instanceof Array) {
@@ -437,7 +437,7 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
-	
+
 	responseTransformations: function(transformations) {
 		if(transformations) {
 			if(transformations instanceof Array) {
@@ -448,39 +448,39 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
-	
+
 	addRequestTransformation: function(transformation) {
 		if(transformation && typeof transformation === "function") {
 			this.config.transformations.request.push(transformation);
 		}
 		return this;
 	},
-	
+
 	addResponseTransformation: function(transformation) {
 		if(transformation && typeof transformation === "function") {
 			this.config.transformations.response.push(transformation);
 		}
 		return this;
 	},
-    
+
     hpkp: function(options) {
         var header = hpkp(options.sha256s, options.maxAge, options.includeSubdomains, options.reportOnly, options.reportUri);
         this.headers(header);
         return this;
     },
-	
+
 	execute: function() {
 		var i;
-		var reqTrans = this.config.transformations.request, 
+		var reqTrans = this.config.transformations.request,
 			options,
 			request,
             requestKey,
 			$config = extend({}, this.config, {
-				url: copy(this.config.url), 
+				url: copy(this.config.url),
 				headers: copy(this.config.headers),
 				parsers: copy(this.config.parsers)
-			}); 
-		
+			});
+
 		// Remove transformations from the request options so they can't be modified on the fly
 		delete $config.transformations;
 		options = $config;
@@ -488,9 +488,9 @@ extend(APGateway.prototype, {
 			options = reqTrans[i](options);
 		}
 		request = new APRequest(options);
-		
+
         requestKey = request.fullUrl();
-        
+
         if(this.config.cache && request.method === "GET") {
             return APGateway.RequestCache.get(requestKey).then(bind(this, function(value) {
                 if(value !== undefined) {
@@ -505,7 +505,7 @@ extend(APGateway.prototype, {
             return this.sendRequest(request);
         }
 	},
-    
+
     sendRequest: function(request) {
         var self = this;
         return new Es6Promise(function(resolve, reject) {
@@ -525,6 +525,7 @@ extend(APGateway.prototype, {
 });
 
 module.exports = APGateway;
+
 },{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
@@ -805,7 +806,7 @@ extend(APRequest.prototype, {
 		path += (this.url.hash) ? this.url.hash : "";
         return path;
     },
-    
+
     fullUrl: function() {
         var url = this.url.protocol + "//" + this.url.hostname;
         if(this.url.port !== null && this.url.port !== undefined && this.url.port !== "") {
@@ -814,15 +815,15 @@ extend(APRequest.prototype, {
         url += this.urlPath();
         return url;
     },
-    
+
 	send: function() {
         var path = this.urlPath();
-		
+
 		var headers = copy(this.headers);
 		if(typeof this.contentType === "string") {
 			headers["Content-Type"] = this.contentType;
 		}
-		
+
 		var self = this;
 		return new Es6Promise(function(resolve, reject) {
 			var req = http.request({
@@ -837,30 +838,31 @@ extend(APRequest.prototype, {
 				res.on("data", function(chunk) {
 					data += chunk;
 				});
-				
+
 				res.on("end", function() {
 					// Create APResponse and finish
 					var apResponse = new APResponse(res, self.dataType, data, self.cache);
 					apResponse.parsers = self.parsers;
-                    apResponse.origin = { method: self.method, url: self.fullUrl() };
+        	apResponse.origin = { method: self.method, url: self.fullUrl() };
 					resolve(apResponse);
 				});
 			});
-			
+
 			req.on("error", function(e) {
 				reject(e);
 			});
-			
+
 			if(self.method !== "GET") {
 				req.write(self.data);
 			}
-			
+
 			req.end();
 		});
 	}
 });
 
 module.exports = APRequest;
+
 },{"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"http":16,"native-promise-only":24}],13:[function(require,module,exports){
 "use strict";
 
@@ -1110,11 +1112,8 @@ module.exports = {
 		var result;
 		if(typeof xmlstring === "string") {
 			try {
-				console.log("Calling DOMParser with: "+xmlstring);
 				var parser = new DOMParser();
 				result = parser.parseFromString(xmlstring, "application/xml");
-				console.log("Result is");
-				console.log(result);
 			} catch(e) {
 				result = xmlstring;
 			}
