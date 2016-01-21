@@ -1,68 +1,70 @@
-/* global sinon */
-/* global chai */
-/* global chaiAsPromised */
-/* global APGateway */
 "use strict";
 
-mocha.setup('bdd');
+var mocha 			= require("mocha");
+var chai			= require("chai");
+var chaiAsPromised	= require("chai-as-promised");
+var sinon			= require("sinon");
+
+var PassThrough		= require("stream").PassThrough;
+var http			= require("http");
+
+var Es6Promise      = require("native-promise-only");
+var APGateway		= require("../../index.js");
+
 chai.use(chaiAsPromised);
 
 var expect = chai.expect;
 var should = chai.should();
 
-/**
- * Fake Server Definition
- */
-var fakeIdSeed = 1;
-function initServer(server) {
-	server.respondWith("GET", "/people", JSON.stringify([{ name: "John" }]));
-	server.respondWith("POST", "/people", function(request) {
-		var data = JSON.parse(request.requestBody);
-		if(data.name && data.age) {
-			request.respond(201, {}, JSON.stringify({ id: fakeIdSeed++, name: data.name, age: data.age }));
-		} else {
-			request.respond(400, {}, "Bad Request");
-		}
-	});
-	server.respondWith("PUT", /\/people\/(\d+)/, function(request, id) {
-		var data = JSON.parse(request.requestBody);
-		if(id && data.name && data.age) {
-			request.respond(200, {}, "OK");
-		} else {
-			request.respond(400, {}, "Bad Request");
-		}
-	});
-	server.respondWith("PATCH", /\/people\/(\d+)/, function(request, id) {
-		var data = JSON.parse(request.requestBody);
-		if(id && (data.name || data.age)) {
-			request.respond(200, {}, "OK");
-		} else {
-			request.respond(400, {}, "Bad Request");
-		}
-	});
-	server.respondWith("DELETE", /\/people\/(\d+)/, function(request, id) {
-		if(id) {
-			request.respond(204, {}, undefined);
-		} else {
-			request.respond(400, {}, "Bad Request");
-		}
-	});
-}
-
 
 describe("APGateway", function() {
-	var server, gateway;
+	var gateway, $request, $write;
+	
+	/**
+	 * Helpers
+	 */
+	function expectation(expectedResponse) {
+		var response = new PassThrough();
+		response.write(JSON.stringify(expectedResponse));
+		response.end();
+	
+		var request = new PassThrough();
+		$write = sinon.spy(request, 'write');
+	
+		$request.callsArgWith(1, response).returns(request);
+	}
+    
+    function multipleExpectation(expectedResponses) {
+        var request = new PassThrough();
+		
+        $write = sinon.spy(request, 'write');
+        
+        for(var i=0 ; i<expectedResponses.length ; i++) {
+            var response = new PassThrough();
+            response.write(JSON.stringify(expectedResponses[i]));
+            response.end();
+		    $request.onCall(i).callsArgWith(1, response).returns(request);
+        }
+	        
+    }
+	/**
+	 * End Helpers
+	 */
+	
+	
 	beforeEach(function() {
+		$request = sinon.stub(http, 'request');
+        APGateway.RequestCache.flush();
 		gateway = new APGateway();
-		gateway.contentType("application/json");
-		server = sinon.fakeServer.create();
-		initServer(server);
+		gateway
+            .contentType("application/json")
+            .cache(false);
 	});
 	
 	afterEach(function() {
-		server.restore();
+		http.request.restore();
 	});
-	
+		
 	it("should exist", function() {
 		expect(APGateway).to.exist;
 	});
@@ -107,19 +109,11 @@ describe("APGateway", function() {
 		expect(gateway.headers()).to.eql({ "Test-Header": "Test-Header-Value", "Another-Header": "Another-Header-Value" });
 	});
 	
-	it("should allow to get/set CORS flag", function() {
-		gateway.crossDomain(true);
-		expect(gateway.crossDomain()).to.be.true;
-		gateway.crossDomain(false);
-		expect(gateway.crossDomain()).to.be.false;
-	});
-	
 	it("should be able to make copies of itself", function() {
 		gateway
 		.method("PATCH")
 		.headers({ "Foo": "Bar" })
 		.url("www.test.com")
-		.crossDomain(true)
 		.contentType("application/xml")
 		.data({ foo: "bar" });
 		
@@ -164,59 +158,71 @@ describe("APGateway", function() {
 	});
 	
 	it("should send GET requests to the server", function(done) {
+		expectation([{ name: "John" }]);
 		gateway
 			.url("/people")
 			.execute().should.eventually.satisfy(function(response) {
 				return response.data[0].name === "John";
 			})
 			.and.notify(done);
-			
-		server.respond();
 	});
 	
 	it("should send POST requests to the server", function(done) {
+		var data = { name: "Paul", age: 29 };
+		expectation({ id: 7, name: data.name, age: data.age });
+		
 		gateway
 			.url("/people")
 			.method("POST")
-			.data({ name: "Paul", age: 29 })
+			.data(data)
 			.execute().should.eventually.satisfy(function(response) {
+				expect($write.withArgs(JSON.stringify(data)).calledOnce);
 				return response.data.id && response.data.name === "Paul";
 			})
 			.and.notify(done);
-			
-		server.respond();
 	});
 	
 	it("should send PUT requests to the server", function(done) {
+		var data = { name: "James", age: 34 };
+		expectation("OK");
+		
 		gateway
 			.url("/people/15")
 			.method("PUT")
-			.data({ name: "James", age: 34 })
-			.execute().should.eventually.be.fulfilled.and.notify(done);
-			
-		server.respond();
+			.data(data)
+			.execute().should.eventually.satisfy(function(response) {
+				expect($write.withArgs(JSON.stringify(data)).calledOnce);
+				return response.data === "OK";
+			})
+			.and.notify(done);
 	});
 	
 	it("should send PATCH requests to the server", function(done) {
+		var data = { name: "Joan" };
+		expectation("OK");
 		gateway
 			.url("/people/20")
 			.method("PATCH")
 			.data({ name: "Joan" })
-			.execute().should.eventually.be.fulfilled.and.notify(done);
-			
-		server.respond();
+			.execute().should.eventually.satisfy(function(response) {
+				expect($write.withArgs(JSON.stringify(data)).calledOnce);
+				return response.data === "OK";
+			})
+			.and.notify(done);
 	});
 	
 	it("should send DELETE requests to the server", function(done) {
+		expectation("OK");
 		gateway
 			.url("/people/10")
 			.method("DELETE")
 			.execute().should.eventually.be.fulfilled.and.notify(done);
-			
-		server.respond();
 	});
 	
 	it("should apply request/response transformations", function(done) {
+		var ex = { name: "Helen", age: 90 };
+		expectation(ex);
+		
 		var encode = gateway.requestTransformations()[0];
 		var decode = gateway.responseTransformations()[0];
 		
@@ -244,11 +250,51 @@ describe("APGateway", function() {
 			])
 			.execute().should.eventually.satisfy(function(response) {
 				var data = response.data;
+				expect($write.withArgs(JSON.stringify(ex)).calledOnce);
 				return (data.HELLO === "WORLD!" && data.name === "Helen" && data.age === 90);
 			})
 			.and.notify(done);
-		
-		server.respond();
 	});
+    
+    it("should cache GET requests", function(done) {
+       expectation({ foo: "bar" });
+       gateway
+            .cache(true)
+            .method("GET")
+            .url("http://www.example.com/some/test/route")
+            .data({ name: "Ron", age: 50 })
+            .execute()
+            .then(function(firstResponse) {
+               gateway.execute().then(function(secondResponse) {
+                  delete firstResponse.parsers;
+                  delete secondResponse.parsers;
+                  firstResponse.statusCode.should.equal(secondResponse.statusCode);
+                  firstResponse.data.should.eql(secondResponse.data);
+                  firstResponse.headers.should.eql(secondResponse.headers);
+                  gateway.cache(false);
+                  done();
+               });
+            });
+            
+    });
+    
+    it("should queue requests", function(done) {
+       APGateway.Queue.pause();
+       APGateway.RequestCache.flush();
+       
+       gateway.cache(false).method("GET").url("/people");
+       
+       expectation({ foo: "bar" });
+       
+       var promises = [];
+       for(var i=0 ; i<6 ; i++) {
+           promises.push(gateway.execute());
+       }
+       
+       expect(APGateway.Queue.messages.length).to.equal(6);
+       
+       APGateway.Queue.resume();
+       done();
+    });
 	
 });

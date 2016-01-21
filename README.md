@@ -7,13 +7,30 @@ Lightweight JavaScript SDK to connect to a JustAPIs gateway through a web client
 ##Dependencies
 
 * [Native Promise Only](https://github.com/getify/native-promise-only)
+* [Tiny Emitter](https://github.com/scottcorgan/tiny-emitter)
+* [xml2js](https://www.npmjs.com/package/xml2js) (when running in Node only)
+* [xmlserializer](https://www.npmjs.com/package/xmlserializer) (when running in Node only)
+
+##Features
+
+* Browser & Node.js support
+* HTTP request/response connection
+* HTTP Public Key Pinning
+* Per-request caching
+* Pausable/Resumable asynchronous request queue
+
+##Install via NPM
+
+```bash
+$ npm install justapis-javascript-sdk
+```
 
 ##Setup
 
 The SDK is built with browserify. If you would like to add a single bundled file you can find it in the `dist` folder.
 
 ```html
-<script src="justapis-javascript-sdk/dist/ap_gateway.js"></script>
+<script src="justapis-javascript-sdk/dist/justapis-javascript-sdk-v0.1.0.js"></script>
 ```
 
 Else, if you are using browserify in your project you probably prefer to use `require` to load the dependency.
@@ -85,28 +102,182 @@ gw.headers(); // will return { "Foo": "Bar" }
 gwCopy.headers(); // will return { "Foo": "Hello World!" }
 ```
 
+##Caching requests
+
+**Note: The Caching service behaves differently in Node than in the browser**
+
+The **APGateway** allow for request caching per request. Only responsed to GET requests are cached, and this is enabled by default.
+
+```javascript
+var gateway = new APGateway();
+gateway.cache(false);   // Disable caching from now on...
+gateway.execute();      // Send request without caching the response
+gateway.cache(true)     // Enable caching from now on...
+```
+
+When using it in Node, responses will be cached in-memory only by default. In the browser however, cached responses will be saved to `localStorage` if available.
+
+Since `localStorage` is persistent, you might want to flush it at some point.
+
+```javascript
+// This will only remove localStorage entries set by
+// APGateway's request cache
+APGateway.RequestCache.flush();
+```
+
+Cached responses have a TTL (time to live) of 1 week (604800000 milliseconds). Any response older than that will be ignored and removed from the cache. If you would like to use a different TTL you can set it like so:
+
+```javascript
+// ttl is in milliseconds
+APGateway.RequestCache.ttl = 60000; // set ttl to 1 minute
+```
+
+###Custom persistence
+
+In some cases you may want to persist the cache in a different way. In the case of Node, for example, you may want to persist cached instances through a database or external service. In order to do that you can replace `APGateway.RequestCache.storage` with your own implementation. Here is a small example of how to do just that:
+
+```javascript
+// The storage object MUST have the following methods
+APGateway.RequestCache.storage = {
+    /**
+     * Set key/value pair in storage
+     *
+     * key -> string key identifying the value
+     * record -> an Object containing two attributes:
+     *      'value' -> the Object being cached
+     *      'timestamp' -> already serialized Date string
+     *
+     * returns -> a Promise to be resolved when set is finished (no resolve value needed)
+     */
+    set: function(key, record) {...},
+
+    /**
+     * Get a value from storage
+     *
+     * key -> string identifying the value to retrieve
+     *
+     * returns -> a Promise that resolves with the retrieved Object
+     */
+    get: function(key) {...},
+
+    /**
+     * Get all values in the storage. A prefix is passed that identifies the entire cache.
+     * This prefix is prepended to every key and used to differentiate one cache instance from another.
+     * It is only passed as a convenience, it is not required to use it internally.
+     *
+     * prefix -> string prefix identifying the cache
+     *
+     * returns -> a Promise that resolves with an Array of the retrieved objects (or empty Array if none)  
+     */
+    getAll: function(prefix) {...},
+
+    /**
+     * Removes a single record from the storage
+     *
+     * key -> string key identifying the record
+     *
+     * returns -> a Promise that resolves when the record has been removed (no resolve value needed)
+     */
+    remove: function(key) {...},
+
+    /**
+     * Removes all records from storage
+     *
+     * prefix -> Same as with 'getAll()'
+     *
+     * returns -> a Promise that resolves when flushing is complete (no resolve value needed)
+     */
+    flush: function(prefix) {...}
+
+};
+```
+
+You may have noticed that all the required methods to override return a Promise, this is meant as a convenience so you can easily work with async operations when persisting records. Any Promises/A+ compliant implementation can be used (or even native Promises if available), but in case you do not want to add a promise package just for this, **APGateway** uses an implementation internally that you can find in `APGateway.Promise`.
+
+
+##Async request queue
+
+**APGateway** instances use an async queue internally to send requests. This queue is shared across instances and can be paused/resumed to avoid sending further requests at any time. If your application goes offline you can pause the queue, wait for reconnection, and resume it without loosing requests.
+
+```javascript
+APGateway.Queue.pause();
+var gateway = new APGateway();
+gateway
+    .url('http://localhost:1337/resource')
+    .execute() // This adds the request to the queue
+    .then(function(response) { /* Got response back */ })
+    .catch(function(error) { /* Got an error */ });
+
+// The queue will continue to build up until resumed
+APGateway.Queue.resume();
+```
+
+Whenever the queue is resumed it will start sending pending requests asynchronously. Because the queue can get pretty big while paused, the queue will throttle the flow of requests being sent to avoid flooding the server. The default throttle time is 300 milliseconds, but you can adjust this by doing `APGateway.Queue.throttleBy(amountInMilliseconds)`.
+
+###Persisting the queue
+
+In some cases you might want to save the state of the queue either to `localStorage` or a database. For that purpose there's an export method on the queue you can use.
+
+**Note: The queue must be paused before calling export, otherwise an Error will be thrown**
+
+```javascript
+// Pause the queue
+APGateway.Queue.pause();
+// requests will be an Array of requests
+var requests = APGateway.Queue.export();
+
+// persists requests...
+```
+
+Now when get your persisted requests you can just resend them.
+
+```javascript
+// Get the saved requests from your storage of choice
+
+var gateway = new APGateway();
+persistedRequests.forEach(function(requestData) {
+   // First we need to recreate the APRequest object
+   var request = Object.create(APGateway.APRequest, requestData);
+   gateway
+    .sendRequest(request)
+    .then(function(res) {
+        // Do something else
+    })
+    .catch(function(error) {
+        // There was an error
+    });
+});
+```
+
 ##APGateway instance methods
 
 ###Default properties
 
 ```javascript
-url: "http://localhost:5000",
+url: {
+    href: "http://localhost:5000",
+    protocol: "http:",			
+    hostname: "localhost",
+    port: "5000",
+    pathname: "/",
+    search: null,
+    hash: null
+},
 method: "GET",
-async: true,
-crossDomain: true,
 silentFail: true,
+cache: true,
 dataType: "json",
 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 data: {},
 headers: {},
 parsers: {
-	json: JSONParser,
-	form: FormDataParser,
-	xml: undefined // Coming soon...
+    json: JSONParser,
+    form: FormDataParser,
+    xml: XMLParser
 },
 transformations: {
-	request: [ EncodeTransformation ],
-	response: [ DecodeTransformation ]
+    request: [ EncodeTransformation ],
+	response: [ DecodeTransformation, CacheResponse ]
 }
 ```
 
@@ -134,12 +305,20 @@ Returns the current http method or the APGateway instance for quick chaining
 
 Returns the current request data or the APGateway instance for quick chaining
 
+**.dataType( *dataType* )**
+
+* *dataType* -> **string**
+	* If *dataType* is undefined the method will act as a getter, else it will set the value and return `this`.
+	* "json" and "xml" dataTypes are parsed automatically, any other dataType will be returned as a string.
+
+Returns the current response data type or the APGateway instance for quick chaining
+
 **.contentType( *contentType* )**
 
 * *contentType* -> **string**
 	* If *contentType* is undefined the method will act as a getter, else it will set the value and return `this`.
 
-Returns the current url or the APGateway instance for quick chaining
+Returns the current content type or the APGateway instance for quick chaining
 
 **.headers( *headers* )**
 
@@ -166,6 +345,13 @@ When a request is not successful **APGateway** will throw an error. Setting *sil
 
 Returns the current value of silentFail or the APGateway instance for quick chaining
 
+**.cache( *active* )**
+
+* *active* -> **boolean**
+	* Default value: `true`
+	* If *active* is undefined the method will act as a getter, else it will set the value and return `this`.
+
+Returns the current value of cache or the APGateway instance for quick chaining
 
 **.copy()**
 
@@ -178,7 +364,7 @@ Returns a shallow copy of the APGateway instance.
 	* Array of functions to transform the request configuration **before** it is sent to the server
 	```javascript
 		gw.requestTransformations([
-			// transformations must ALWAYS return "request" 
+			// transformations must ALWAYS return "request"
 			// in order for the entire chain to work properly
 			function(request) {...},
 			function(request) {...}		
@@ -194,7 +380,7 @@ Returns the current request transformations or the APGateway instance for quick 
 	* Array of functions to transform the response object **after** it returns from the server
 	```javascript
 		gw.responseTransformations([
-			// transformations must ALWAYS return "response" 
+			// transformations must ALWAYS return "response"
 			// in order for the entire chain to work properly
 			function(response) {...},
 			function(response) {...}		
@@ -216,6 +402,25 @@ Returns the APGateway instance for quick chaining
 	* Adds the transformation at the end of the response transformation chain
 
 Returns the APGateway instance for quick chaining
+
+**.hpkp( *options* )**
+
+* *options* -> **Object**
+
+    **Should contain:**
+
+    * *sha256s* (required) -> **string[]**
+        * Array of **two** encoded public key information hashes. One is actually used, the other is kept as backup.
+    * *maxAge* (required) -> **number**
+        * The time in seconds that the pinned key will be remembered for.
+    * *includeSubdomains* (optional) -> **boolean**
+        * Applies the pinned key to subdomains also.
+    * *reportOnly* (optional) -> **boolean**
+        * Specifies if pin validation failures should be reported to the given URL (if true *reportUri* must be present as well).
+    * *reportUri* (optional) -> **string**
+        * URL to send pin validation failure reports to.
+
+* Sets up [HTTP Public Key Pinning](https://developer.mozilla.org/en/docs/Web/Security/Public_Key_Pinning) for the **APGateway** instance.
 
 **.execute()**
 
@@ -240,20 +445,86 @@ angular.module('MyModule')
 		$scope.message = "Default message";
 		// Create the gateway as usual...
 		var gateway = new APGateway();
-		
+
 		gateway
 		.url('http://my.service/message')
 		.execute()
 		.then(function(response) {
-			// Keep in mind when updating the $scope to use $apply 
+			// Keep in mind, when updating the $scope, to use $apply
 			//   so angular is made aware of the change
 			$scope.$apply(function() {
 				$scope.message = response.data;
 			});
 		});
-		
-	
+
+
 	});
+```
+
+###Ember
+
+Like React or Angular, there is no restriction to use APGateway in an Ember application. If you're using Ember Data however you might want to integrate APGateway so you can load Models from it.
+
+####Ember Data
+
+In order to integrate with Ember Data you will want to create an [Adapter](http://emberjs.com/api/data/classes/DS.Adapter.html).
+
+This example code shows the basic principle of how to integrate the two.
+
+**NOTE**: For simplicity's sake the example only shows implementations of `findRecord` and `createRecord` but when extending `DS.Adapter` you **must** implement the other methods too.
+
+```javascript
+// url of your endpoint
+var URL = "http://localhost:5000/todos";
+var gateway = new APGateway();
+
+// This helper will make sure that the response of the gateway runs
+// inside Ember's run loop.
+function runRequestToGateway(gateway) {
+	return Ember.RSVP.Promise(function(resolve, reject) {
+		gateway
+		.execute()
+		.then(function(response) {
+			Ember.run(null, resolve, response.data);
+		})
+		.catch(function(error) {
+			Ember.run(null, reject, error);
+		});
+	});
+}
+
+// Register an ApplicationAdapter that uses APGateway internally...
+Todos.ApplicationAdapter = DS.Adapter.extend({
+
+	findRecord: function(store, type, id, snapshot) {
+		gateway
+		.method("GET")
+		.url(URL + "/" + id)
+		.silentFail(false);
+
+		return runRequestToGateway(gateway);
+	},
+
+	createRecord: function(store, type, snapshot) {
+		var data = this.serialize(snapshot, { includeId: true });
+
+		gateway
+		.url(URL)
+		.method("POST")
+		.data(data)
+		.silentFail(false);
+
+		return runRequestToGateway(gateway);
+	},
+
+	updateRecord: function(store, type, snapshot) {...},
+
+	deleteRecord: function(store, type, snapshot) {...},
+
+	findAll: function(store, type, sinceToken, snapshotRecordArray) {...},
+
+	query: function(store, type, query, recordArray) {...}
+});
 ```
 
 ##Development
