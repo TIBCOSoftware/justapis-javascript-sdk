@@ -135,54 +135,54 @@ In some cases you may want to persist the cache in a different way. In the case 
 APGateway.RequestCache.storage = {
     /**
      * Set key/value pair in storage
-     * 
+     *
      * key -> string key identifying the value
-     * record -> an Object containing two attributes: 
+     * record -> an Object containing two attributes:
      *      'value' -> the Object being cached
      *      'timestamp' -> already serialized Date string
-     * 
-     * returns -> a Promise to be resolved when set is finished (no resolve value needed) 
+     *
+     * returns -> a Promise to be resolved when set is finished (no resolve value needed)
      */
     set: function(key, record) {...},
-    
+
     /**
      * Get a value from storage
-     * 
+     *
      * key -> string identifying the value to retrieve
-     * 
+     *
      * returns -> a Promise that resolves with the retrieved Object
      */
     get: function(key) {...},
-    
+
     /**
-     * Get all values in the storage. A prefix is passed that identifies the entire cache. 
-     * This prefix is prepended to every key and used to differentiate one cache instance from another. 
+     * Get all values in the storage. A prefix is passed that identifies the entire cache.
+     * This prefix is prepended to every key and used to differentiate one cache instance from another.
      * It is only passed as a convenience, it is not required to use it internally.
-     * 
+     *
      * prefix -> string prefix identifying the cache
-     * 
+     *
      * returns -> a Promise that resolves with an Array of the retrieved objects (or empty Array if none)  
      */
     getAll: function(prefix) {...},
-    
+
     /**
      * Removes a single record from the storage
-     * 
+     *
      * key -> string key identifying the record
-     * 
+     *
      * returns -> a Promise that resolves when the record has been removed (no resolve value needed)
      */
     remove: function(key) {...},
-    
+
     /**
-     * Removes all records from storage 
-     * 
+     * Removes all records from storage
+     *
      * prefix -> Same as with 'getAll()'
-     * 
+     *
      * returns -> a Promise that resolves when flushing is complete (no resolve value needed)
      */
     flush: function(prefix) {...}
-    
+
 };
 ```
 
@@ -220,7 +220,7 @@ APGateway.Queue.pause();
 // requests will be an Array of requests
 var requests = APGateway.Queue.export();
 
-// persists requests... 
+// persists requests...
 ```
 
 Now when get your persisted requests you can just resend them.
@@ -303,6 +303,7 @@ Returns the current request data or the APGateway instance for quick chaining
 
 * *dataType* -> **string**
 	* If *dataType* is undefined the method will act as a getter, else it will set the value and return `this`.
+	* "json" and "xml" dataTypes are parsed automatically, any other dataType will be returned as a string.
 
 Returns the current response data type or the APGateway instance for quick chaining
 
@@ -357,7 +358,7 @@ Returns a shallow copy of the APGateway instance.
 	* Array of functions to transform the request configuration **before** it is sent to the server
 	```javascript
 		gw.requestTransformations([
-			// transformations must ALWAYS return "request" 
+			// transformations must ALWAYS return "request"
 			// in order for the entire chain to work properly
 			function(request) {...},
 			function(request) {...}		
@@ -373,7 +374,7 @@ Returns the current request transformations or the APGateway instance for quick 
 	* Array of functions to transform the response object **after** it returns from the server
 	```javascript
 		gw.responseTransformations([
-			// transformations must ALWAYS return "response" 
+			// transformations must ALWAYS return "response"
 			// in order for the entire chain to work properly
 			function(response) {...},
 			function(response) {...}		
@@ -399,14 +400,14 @@ Returns the APGateway instance for quick chaining
 **.hpkp( *options* )**
 
 * *options* -> **Object**
-    
+
     **Should contain:**
-    
+
     * *sha256s* (required) -> **string[]**
         * Array of **two** encoded public key information hashes. One is actually used, the other is kept as backup.
     * *maxAge* (required) -> **number**
         * The time in seconds that the pinned key will be remembered for.
-    * *includeSubdomains* (optional) -> **boolean** 
+    * *includeSubdomains* (optional) -> **boolean**
         * Applies the pinned key to subdomains also.
     * *reportOnly* (optional) -> **boolean**
         * Specifies if pin validation failures should be reported to the given URL (if true *reportUri* must be present as well).
@@ -438,19 +439,19 @@ angular.module('MyModule')
 		$scope.message = "Default message";
 		// Create the gateway as usual...
 		var gateway = new APGateway();
-		
+
 		gateway
 		.url('http://my.service/message')
 		.execute()
 		.then(function(response) {
-			// Keep in mind, when updating the $scope, to use $apply 
+			// Keep in mind, when updating the $scope, to use $apply
 			//   so angular is made aware of the change
 			$scope.$apply(function() {
 				$scope.message = response.data;
 			});
 		});
-		
-	
+
+
 	});
 ```
 
@@ -464,7 +465,7 @@ In order to integrate with Ember Data you will want to create an [Adapter](http:
 
 This example code shows the basic principle of how to integrate the two.
 
-**NOTE**: For simplicity's sake the example only shows implementations of `findRecord` and `createRecord` but when extending `DS.Adapter` you **must** implement the other methods too. 
+**NOTE**: For simplicity's sake the example only shows implementations of `findRecord` and `createRecord` but when extending `DS.Adapter` you **must** implement the other methods too.
 
 ```javascript
 // url of your endpoint
@@ -488,34 +489,34 @@ function runRequestToGateway(gateway) {
 
 // Register an ApplicationAdapter that uses APGateway internally...
 Todos.ApplicationAdapter = DS.Adapter.extend({
-	
+
 	findRecord: function(store, type, id, snapshot) {
 		gateway
 		.method("GET")
 		.url(URL + "/" + id)
 		.silentFail(false);
-		
+
 		return runRequestToGateway(gateway);
 	},
-	
+
 	createRecord: function(store, type, snapshot) {
 		var data = this.serialize(snapshot, { includeId: true });
-		
+
 		gateway
 		.url(URL)
 		.method("POST")
 		.data(data)
 		.silentFail(false);
-		
+
 		return runRequestToGateway(gateway);
 	},
-	
+
 	updateRecord: function(store, type, snapshot) {...},
-	
+
 	deleteRecord: function(store, type, snapshot) {...},
-	
+
 	findAll: function(store, type, sinceToken, snapshotRecordArray) {...},
-	
+
 	query: function(store, type, query, recordArray) {...}
 });
 ```

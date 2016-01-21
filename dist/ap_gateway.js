@@ -289,6 +289,8 @@ extend(APGateway, {
     
     APResponse: APResponse,
     
+    Promise: Es6Promise, 
+    
     defaults: {
         url: {
             href: "http://localhost:5000",
@@ -363,6 +365,17 @@ extend(APGateway.prototype, {
 		}
 		return this;
 	},
+    
+    dataType: function(dataType) {
+        if(dataType) {
+			if(typeof dataType === "string") {
+				this.config.dataType = dataType;
+			}
+		} else {
+			return this.config.dataType;
+		}
+		return this;
+    },
 	
 	contentType: function(contentType) {
 		if(contentType) {
@@ -1079,7 +1092,7 @@ module.exports = Url;
 "use strict";
 
 module.exports = {
-	
+
 	serialize: function(xml) {
 		var result;
 		if(xml) {
@@ -1092,21 +1105,25 @@ module.exports = {
 		}
 		return result;
 	},
-	
+
 	parse: function(xmlstring) {
 		var result;
 		if(typeof xmlstring === "string") {
 			try {
+				console.log("Calling DOMParser with: "+xmlstring);
 				var parser = new DOMParser();
 				result = parser.parseFromString(xmlstring, "application/xml");
+				console.log("Result is");
+				console.log(result);
 			} catch(e) {
 				result = xmlstring;
 			}
 		}
 		return result;
 	}
-		
+
 };
+
 },{}],19:[function(require,module,exports){
 "use strict";
 
