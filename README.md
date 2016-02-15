@@ -328,12 +328,15 @@ Returns the current content type or the APGateway instance for quick chaining
 
 Returns the current headers or the APGateway instance for quick chaining
 
-**.crossDomain( *crossDomain* )**
+**.withCredentials( *withCredentials* )**
 
-* *crossDomain* -> **boolean**
-	* If *crossDomain* is undefined the method will act as a getter, else it will set the value and return `this`.
+Enabling `withCredentials` will cause any cookies to be included in the request to the server. The server needs to be configured to enable credentials as well by adding `Access-Control-Allow-Credentials: true` as a response header.
 
-Returns the current crossDomain value or the APGateway instance for quick chaining
+* *withCredentials* -> **boolean**
+	* Default value: `false`
+	* If *withCredentials* is undefined the method will act as a getter, else it will set the value and return `this`.
+
+Returns the current value of withCredentials or the APGateway instance for quick chaining
 
 **.silentFail( *silent* )**
 
