@@ -308,6 +308,7 @@ extend(APGateway, {
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         data: {},
         headers: {},
+				withCredentials: false,
         parsers: {
             json: JSONParser,
             form: FormDataParser,
@@ -395,6 +396,15 @@ extend(APGateway.prototype, {
 			}
 		} else {
 			return this.config.headers;
+		}
+		return this;
+	},
+
+	withCredentials: function(withCredentials) {
+		if(typeof withCredentials === "boolean") {
+			this.config.withCredentials = withCredentials;
+		} else {
+			return this.config.withCredentials;
 		}
 		return this;
 	},
@@ -800,24 +810,25 @@ function APRequest(options) {
  * Methods
  */
 extend(APRequest.prototype, {
-    urlPath: function() {
-        var path = (this.url.pathname) ? this.url.pathname : "";
+
+	urlPath: function() {
+    var path = (this.url.pathname) ? this.url.pathname : "";
 		path += (this.url.search) ? this.url.search : "";
 		path += (this.url.hash) ? this.url.hash : "";
-        return path;
-    },
+    return path;
+  },
 
-    fullUrl: function() {
-        var url = this.url.protocol + "//" + this.url.hostname;
-        if(this.url.port !== null && this.url.port !== undefined && this.url.port !== "") {
-            url += ":" + this.url.port;
-        }
-        url += this.urlPath();
-        return url;
-    },
+  fullUrl: function() {
+      var url = this.url.protocol + "//" + this.url.hostname;
+      if(this.url.port !== null && this.url.port !== undefined && this.url.port !== "") {
+          url += ":" + this.url.port;
+      }
+      url += this.urlPath();
+      return url;
+  },
 
 	send: function() {
-        var path = this.urlPath();
+    var path = this.urlPath();
 
 		var headers = copy(this.headers);
 		if(typeof this.contentType === "string") {
@@ -832,7 +843,8 @@ extend(APRequest.prototype, {
 				port: self.url.port,
 				path: path,
 				method: self.method,
-				headers: headers
+				headers: headers,
+				withCredentials: self.withCredentials
 			}, function(res) {
 				var data = "";
 				res.on("data", function(chunk) {
@@ -899,11 +911,12 @@ function HttpRequest(options) {
 	this.url = "";
 	this.method = options.method;
 	this.headers = copy(options.headers);
-	
+	this.withCredentials = options.withCredentials;
+
 	if(typeof options === "object") {
 		this.url = options.protocol + "//" + options.hostname + ":" + options.port + options.path;
 	}
-	
+
 	this.detectEnv();
 }
 
@@ -918,7 +931,7 @@ HttpRequest.states = {
 	'OPENED'			: 1,
 	'HEADERS_RECEIVED'	: 2,
 	'LOADING'			: 3,
-	'DONE'				: 4 
+	'DONE'				: 4
 };
 
 HttpRequest.env = {
@@ -931,10 +944,10 @@ extend(HttpRequest.prototype, {
 	write: function(data) {
 		this.data = data;
 	},
-	
+
 	end: function() {
 		var xhr;
-		
+
 		switch(this.env) {
 			case HttpRequest.env.modern:
 				xhr = new window.XMLHttpRequest();
@@ -946,9 +959,10 @@ extend(HttpRequest.prototype, {
 				xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
 				break;
 		}
-		
+
 		xhr.open(this.method, this.url, true);
-        
+		xhr.withCredentials = !!this.withCredentials;
+
 		if(typeof this.headers === "object") {
 			for(var key in this.headers) {
 				if(this.headers.hasOwnProperty(key)) {
@@ -956,7 +970,7 @@ extend(HttpRequest.prototype, {
 				}
 			}
 		}
-		
+
 		this.addOnChangeListener(xhr, bind(this, function() {
 			if(xhr.readyState === HttpRequest.states.DONE) {
 				var response = new HttpResponse(xhr);
@@ -969,15 +983,15 @@ extend(HttpRequest.prototype, {
 				}
 			}
 		}));
-		
+
 		xhr.ontimeout = bind(this, function() {
 			var response = new HttpResponse(xhr);
 			this.emit("error", new Error("Request timeout -> "+response.statusCode+", "+response.text));
 		});
-		
+
 		xhr.send(this.data);
 	},
-	
+
 	detectEnv: function() {
 		if(typeof XMLHttpRequest !== "undefined") {
 			this.env = HttpRequest.env.modern;
@@ -987,7 +1001,7 @@ extend(HttpRequest.prototype, {
 			this.env = HttpRequest.env.ie6;
 		}
 	},
-	
+
 	addOnChangeListener: function(xhr, fn) {
 		switch(this.env) {
 			case HttpRequest.env.modern:
@@ -1003,6 +1017,7 @@ extend(HttpRequest.prototype, {
 
 
 module.exports = HttpRequest;
+
 },{"../../utils/bind":20,"../../utils/copy":21,"../../utils/extend":22,"./HttpResponse":15,"tiny-emitter":25}],15:[function(require,module,exports){
 "use strict";
 
