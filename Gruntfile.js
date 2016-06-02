@@ -7,7 +7,7 @@ module.exports = function(grunt) {
 		browserify: {
 			dist: {
 				files: {
-					'dist/<%=pkg.name%>-v<%=pkg.version%>.js': ['index.js']
+					'dist/<%=pkg.name%>.js': ['index.js']
 				},
 				options: {
 					watch: true
@@ -34,7 +34,7 @@ module.exports = function(grunt) {
 					sourceMap: true
 				},
 				files: {
-					'dist/<%=pkg.name%>-v<%=pkg.version%>.min.js': ['dist/<%=pkg.name%>-v<%=pkg.version%>.js']
+					'dist/<%=pkg.name%>.min.js': ['dist/<%=pkg.name%>.js']
 				}
 			}
 		},
