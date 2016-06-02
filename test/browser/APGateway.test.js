@@ -58,60 +58,69 @@ describe("APGateway", function() {
 		gateway = new APGateway();
 		gateway.contentType("application/json");
         gateway.cache(false);
-        
+
 		server = sinon.fakeServer.create();
 		initServer(server);
         server.respondImmediately = true;
 	});
-	
+
 	afterEach(function() {
 		server.restore();
 	});
-		
+
 	it("should exist", function() {
 		expect(APGateway).to.exist;
 	});
-	
+
 	it("should act as a factory", function() {
 		expect(gateway).to.be.an.instanceof(APGateway);
 	});
-	
+
 	it("should act as a constructor", function() {
 		expect(gateway).to.be.an.instanceof(APGateway);
 	});
-	
+
 	it("should have default properties when created", function() {
 		var gw = new APGateway();
 		expect(gw.config).to.eql(APGateway.defaults);
 	});
-	
+
 	it("should allow to get/set the url", function() {
 		gateway.url("www.foo.com");
 		expect(gateway.url()).to.equal("www.foo.com");
 	});
-	
+
 	it("should allow to get/set the method", function() {
 		gateway.method("PUT");
 		expect(gateway.method()).to.equal("PUT");
 	});
-	
-	it("should allow to get/set the contentType", function() {
-		gateway.contentType("application/xml");
-		expect(gateway.contentType()).to.equal("application/xml");
+
+	it('should allow get/set Content-Type header via the contentType method', function() {
+		var headers = {'Content-Type': 'application/xml'};
+		gateway.contentType('application/xml');
+		expect(gateway.headers()).to.eql(headers);
+		expect(gateway.contentType()).to.equal('application/xml');
 	});
-	
+
+	it('should allow get/set Content-Type header via the headers method', function() {
+		var headers = {'Content-Type': 'application/foobar'};
+		gateway.headers(headers);
+		expect(gateway.headers()).to.eql(headers);
+		expect(gateway.contentType()).to.equal('application/foobar');
+	});
+
 	it("should allow to get/set data", function() {
 		gateway.data({ foo: "bar" });
 		expect(gateway.data()).to.eql({ foo: "bar" });
 	});
-	
+
 	it("should allow to get/set headers", function() {
 		gateway.headers({ "Test-Header": "Test-Header-Value" });
 		expect(gateway.headers()).to.eql({ "Test-Header": "Test-Header-Value" });
 		gateway.headers({ "Another-Header": "Another-Header-Value" });
 		expect(gateway.headers()).to.eql({ "Test-Header": "Test-Header-Value", "Another-Header": "Another-Header-Value" });
 	});
-	
+
 	it("should be able to make copies of itself", function() {
 		gateway
 		.method("PATCH")
@@ -119,17 +128,17 @@ describe("APGateway", function() {
 		.url("www.test.com")
 		.contentType("application/xml")
 		.data({ foo: "bar" });
-		
+
 		var gw = gateway.copy();
 		expect(gw).to.eql(gateway);
 	});
-	
+
 	it("should allow to get/set request transformations", function() {
 		var fn = function() { /* */ };
 		gateway.requestTransformations([ fn ]);
 		expect(gateway.requestTransformations()).to.eql([fn]);
 	});
-	
+
 	it("should allow to add a request transformation", function() {
 		var fn = function() { /* */ }, contains = false, tr;
 		gateway.addRequestTransformation(fn);
@@ -141,13 +150,13 @@ describe("APGateway", function() {
 		}
 		expect(contains).to.be.true;
 	});
-	
+
 	it("should allow to get/set response transformations", function() {
 		var fn = function() { /* */ };
 		gateway.responseTransformations([ fn ]);
 		expect(gateway.responseTransformations()).to.eql([fn]);
 	});
-	
+
 	it("should allow to add a response transformation", function() {
 		var fn = function() { /* */ }, contains = false, tr;
 		gateway.addResponseTransformation(fn);
@@ -159,7 +168,7 @@ describe("APGateway", function() {
 		}
 		expect(contains).to.be.true;
 	});
-	
+
 	it("should send GET requests to the server", function(done) {
 		gateway
 			.url("/people")
@@ -168,9 +177,9 @@ describe("APGateway", function() {
 				return response.data[0].name === "John";
 			})
 			.and.notify(done);
-			
+
 	});
-	
+
 	it("should send POST requests to the server", function(done) {
 		gateway
 			.url("/people")
@@ -180,40 +189,40 @@ describe("APGateway", function() {
 				return response.data.id && response.data.name === "Paul";
 			})
 			.and.notify(done);
-			
+
 	});
-	
+
 	it("should send PUT requests to the server", function(done) {
 		gateway
 			.url("/people/15")
 			.method("PUT")
 			.data({ name: "James", age: 34 })
 			.execute().should.eventually.be.fulfilled.and.notify(done);
-			
+
 	});
-	
+
 	it("should send PATCH requests to the server", function(done) {
 		gateway
 			.url("/people/20")
 			.method("PATCH")
 			.data({ name: "Joan" })
 			.execute().should.eventually.be.fulfilled.and.notify(done);
-			
+
 	});
-	
+
 	it("should send DELETE requests to the server", function(done) {
 		gateway
 			.url("/people/10")
 			.method("DELETE")
 			.execute().should.eventually.be.fulfilled.and.notify(done);
-			
+
 	});
-	
+
 	it("should apply request/response transformations", function(done) {
 		var encode = gateway.requestTransformations()[0];
 		var decode = gateway.responseTransformations()[0];
         var caching = gateway.responseTransformations()[1];
-        
+
 		gateway
 			.url("/people")
 			.method("POST")
@@ -225,7 +234,7 @@ describe("APGateway", function() {
 				},
 				function(req) {
 					req.data.age = 90;
-					return req;	
+					return req;
 				},
 				encode
 			])
@@ -242,9 +251,9 @@ describe("APGateway", function() {
 				return (data.HELLO === "WORLD!" && data.name === "Helen" && data.age === 90);
 			})
 			.and.notify(done);
-		
+
 	});
-    
+
     it("should cache GET requests", function(done) {
        gateway
             .cache(true)
@@ -264,15 +273,15 @@ describe("APGateway", function() {
                   done();
                });
             });
-            
+
     });
-    
+
     it("should queue requests", function(done) {
        APGateway.Queue.pause();
        APGateway.RequestCache.flush();
-       
+
        gateway.cache(false).method("GET").url("/people");
-       
+
        var promises = [
            gateway.execute(),
            gateway.execute(),
@@ -281,18 +290,18 @@ describe("APGateway", function() {
            gateway.execute(),
            gateway.execute()
        ];
-       
+
        expect(APGateway.Queue.messages.length).to.equal(6);
-       
+
        APGateway.Queue.throttleBy(100);
-       
+
        Es6Promise.all(promises).then(function() {
            expect(APGateway.Queue.messages.length).to.equal(0);
            done();
        });
-       
+
        APGateway.Queue.resume();
-       
+
     });
-	
+
 });
