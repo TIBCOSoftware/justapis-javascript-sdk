@@ -16,6 +16,11 @@ var extend          = require("../utils/extend");
 var bind            = require("../utils/bind");
 var defaultStorage  = require("./persistence/APMemoryStorage");
 
+/**
+ * Cache class, supports caching and expiration of key/value pairs (also persistence depending on the persistence strategy used)
+ * @constructor
+ * @param {string} prefix - A prefix used to identify a particular instance of APCache (depending on the underlaying persistence strategy it might not be needed)
+ */
 function APCache(prefix) {
     this.prefix = prefix;
     this.storage = APCache.defaults.storage;
@@ -23,14 +28,24 @@ function APCache(prefix) {
     this.expirationCheck = APCache.defaults.expirationCheck;
 }
 
+/**
+ * Default configuration for any APCache instance
+ * @property {object} defaults
+ */
 APCache.defaults = {
-   
+
    storage: defaultStorage,
-   
+
    ttl: 604800000,
-   
+
    expirationCheck: 600,
-   
+
+   /**
+   * Sets a key/value into the cache
+   * @param {any} key
+   * @param {any} value
+   * @returns {Promise}
+   */
    set: function(key, value) {
        if(key !== undefined && key !== null && value !== undefined && value !== null) {
            var serialized = this.cacheKey(key);
@@ -39,7 +54,12 @@ APCache.defaults = {
        }
        return Es6Promise.resolve(undefined);
    },
-   
+
+   /**
+    * Retrieves a key from the cache by key
+    * @param {any} key
+    * @returns {Promise}
+    */
    get: function(key) {
        if(key !== undefined && key !== null) {
            var serialized = this.cacheKey(key);
@@ -50,7 +70,11 @@ APCache.defaults = {
        }
        return Es6Promise.resolve(undefined);
    },
-   
+
+   /**
+    * Gets all key/value pairs saved in this cache
+    * @returns {Promise}
+    */
    getAll: function() {
        return this.storage.getAll(this.prefix).then(bind(this, function(all) {
            var isAlive = true, pairs = {};
@@ -68,7 +92,12 @@ APCache.defaults = {
            return all;
        }));
    },
-   
+
+   /**
+    * Removes a value from the cache by key
+    * @param {any} key
+    * @returns {Promise}
+    */
    remove: function(key) {
        if(key !== undefined && key !== null) {
            var serialized = this.cacheKey(key);
@@ -76,7 +105,12 @@ APCache.defaults = {
        }
        return Es6Promise.resolve(undefined);
    },
-   
+
+   /**
+    * Checks if a key/value pair has gone stale based on the TTL specified in the configuration
+    * @param {object} record - an object containing the value retrieved from the cache and its timestamp (added when setting it)
+    * @returns {boolean} - true if the key/value is still valid, false otherwise
+    */
    checkTTL: function(record) {
        var isAlive = false, now = new Date(), diff;
        if(record !== undefined && record !== null && record.timestamp) {
@@ -86,7 +120,12 @@ APCache.defaults = {
        }
        return isAlive;
    },
-   
+
+   /**
+    * Builds a string key
+    * @param {any} key
+    * @returns {string} - the built key
+    */
    cacheKey: function(key) {
        var serialized = "", keyString = "";
        if(key !== undefined && key !== null) {
@@ -97,7 +136,10 @@ APCache.defaults = {
        }
        return serialized;
    },
-   
+
+   /**
+    * Removes all entries from the cache
+    */
    flush: function() {
        return this.storage.flush(this.prefix);
    }
@@ -111,7 +153,11 @@ extend(APCache.prototype, {
    checkTTL: APCache.defaults.checkTTL,
    cacheKey: APCache.defaults.cacheKey,
    flush: APCache.defaults.flush,
-   
+
+   /**
+    * Triggers an async cycle to remove keys that have expired
+    * @returns {APCache}
+    */
    startCleanupCycle: function() {
        this.cleanupCycle = setInterval(bind(this, function() {
            var isAlive = true;
@@ -123,12 +169,16 @@ extend(APCache.prototype, {
                           this.remove(key);
                       }
                   }
-              } 
+              }
            }));
        }), this.expirationCheck*1000);
        return this;
    },
-   
+
+   /**
+    * Stops the expiration checking cycle
+    * @returns {APCache}
+    */
    stopCleanupCycle: function() {
        if(this.cleanupCycle) {
            clearInterval(this.cleanupCycle);
@@ -139,6 +189,7 @@ extend(APCache.prototype, {
 
 
 module.exports = APCache;
+
 },{"../utils/bind":20,"../utils/extend":22,"./persistence/APMemoryStorage":3,"native-promise-only":24}],3:[function(require,module,exports){
 "use strict";
 
@@ -146,6 +197,13 @@ var Es6Promise  = require("native-promise-only");
 var extend      = require("../../utils/extend");
 var bind        = require("../../utils/bind");
 
+/**
+ * APBrowserStorage class is a persistence strategy used by default when running in the browser
+ * It uses localStorage internally to persist data
+ * Since APBrowserStorage is global to all APCache instances, it uses prefixes to multiplex the localStorage space
+ * and keep the contents of each cache separate
+ * @constructor
+ */
 function APBrowserStorage() {
     if(typeof window.localStorage !== "undefined") {
         this.store = window.localStorage;
@@ -155,7 +213,12 @@ function APBrowserStorage() {
 }
 
 extend(APBrowserStorage.prototype, {
-    
+   /**
+    * Returns all the keys stored with the passed prefix prepended on each of them.
+    * @method
+    * @param {string} prefix - the prefix to prepend on each key
+    * @returns {Array} - list of all keys
+    */
    keysWithPrefix: function(prefix) {
        var results = [], pr = prefix + "::";
        for(var i=0 ; i<this.store.length ; i++) {
@@ -167,7 +230,13 @@ extend(APBrowserStorage.prototype, {
        }
        return results;
    },
-   
+
+   /**
+    * Finds all keys belonging to a specific prefix
+    * @method
+    * @param {string} prefix
+    * @returns {object} - all key/value pairs that belong to the prefix
+    */
    findByPrefix: function(prefix) {
        var results = {}, pr = prefix + "::";
        for(var i=0 ; i<this.store.length ; i++) {
@@ -179,14 +248,27 @@ extend(APBrowserStorage.prototype, {
        }
        return results;
    },
-    
+
+   /**
+    * Sets a key/value pair
+    * @method
+    * @param {string} key
+    * @param {any} value
+    * @returns {Promise}
+    */
    set: function(key, value) {
        return new Es6Promise(bind(this, function(resolve) {
             this.store.setItem(key, JSON.stringify(value));
             resolve();
        }));
    },
-   
+
+   /**
+    * Gets a value by key
+    * @method
+    * @param {string} key
+    * @returns {Promise}
+    */
    get: function(key) {
        return new Es6Promise(bind(this, function(resolve) {
             var record = {}, item = JSON.parse(this.store.getItem(key));
@@ -197,24 +279,42 @@ extend(APBrowserStorage.prototype, {
             resolve(record);
        }));
    },
-   
+
+   /**
+    * Gets all values by prefix. It uses findByPrefix internally.
+    * @method
+    * @param {string} prefix
+    * @returns {Promise}
+    */
    getAll: function(prefix) {
        return new Es6Promise(bind(this, function(resolve) {
             var result = {};
             if(typeof prefix === "string" && prefix !== "") {
                 result = this.findByPrefix(prefix);
             }
-            resolve(result);           
+            resolve(result);
        }));
    },
-   
+
+   /**
+    * Removes a value by key
+    * @method
+    * @param {string} key
+    * @returns {Promise}
+    */
    remove: function(key) {
        return new Es6Promise(bind(this, function(resolve) {
             this.store.removeItem(key);
             resolve(true);
        }));
    },
-   
+
+   /**
+    * Removes all values belonging to a prefix
+    * @method
+    * @param {string} prefix
+    * @returns {Promise}
+    */
    flush: function(prefix) {
        return new Es6Promise(bind(this, function(resolve) {
             var keys = this.keysWithPrefix(prefix);
@@ -227,6 +327,7 @@ extend(APBrowserStorage.prototype, {
 });
 
 module.exports = new APBrowserStorage();
+
 },{"../../utils/bind":20,"../../utils/extend":22,"native-promise-only":24}],4:[function(require,module,exports){
 "use strict";
 
@@ -240,13 +341,18 @@ var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
 var copy					= require("../utils/copy");
 var JSONParser				= require("../parsers/json");
+// The parsers/xml.js file is only used on a node env, in browserify a shim will be used (see package.json "browser" field)
 var XMLParser				= require("../parsers/xml");
 var FormDataParser			= require("../parsers/formData");
 var EncodeTransformation	= require("./transformations/encode");
 var DecodeTransformation	= require("./transformations/decode");
 var hpkp                    = require("../hpkp/hpkp");
 
-
+/**
+ * APGateway class
+ * @constructor
+ * @param {object} options - cofiguration options for the APGateway
+ */
 function APGateway(options) {
 	this.config = {};
 
@@ -277,20 +383,42 @@ function APGateway(options) {
  * Static
  */
 extend(APGateway, {
+		/**
+		 * Create an APGateway
+		 * @param {object} options - configuration options for the APGateway
+		 */
     create: function(options) {
         return new APGateway(options);
     },
 
+		/**
+		 * @property {APCache} RequestCache - caches GET requests
+		 */
     RequestCache: new APCache("APRequestCache"),
 
+		/**
+		 * @property {APQueue} Queue - async request queue, enables pause/resume of request sending
+		 */
     Queue: new APQueue(),
 
+		/**
+		 * @property {APRequest} APRequest - convenience access to APRequest class constructor
+		 */
     APRequest: APRequest,
 
+		/**
+		 * @property {APResponse} APResponse - convenience access to APResponse class constructor
+		 */
     APResponse: APResponse,
 
+		/**
+		 * @property {Promise} Promise - convenience access to native ES2015 Promise implementation
+		 */
     Promise: Es6Promise,
 
+		/**
+		 * @property {object} defaults - default configuration for any APGateway object
+		 */
     defaults: {
         url: {
             href: "http://localhost:5000",
@@ -305,9 +433,10 @@ extend(APGateway, {
         silentFail: true,
         cache: true,
         dataType: "json",
-        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         data: {},
-        headers: {},
+        headers: {
+					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+				},
 				withCredentials: false,
         parsers: {
             json: JSONParser,
@@ -335,6 +464,12 @@ extend(APGateway, {
  */
 extend(APGateway.prototype, {
 
+	/**
+	 * Getter/Setter of base url for an APGateway object
+	 * @method
+	 * @param {string|undefined} url - the base url to set or undefined if being used as a getter
+	 * @returns {string|APGateway}
+	 */
 	url: function(url) {
 		if(url) {
 			if(typeof url === "string") {
@@ -347,6 +482,12 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Getter/Setter of the http method/verb to use when launching a request
+	 * @method
+	 * @param {string|undefined} method - can be GET, POST, PUT, PATCH, DELETE or any other verb supported by http, must be capitalized
+	 * @returns {string|APGateway}
+	 */
 	method: function(method) {
 		if(method) {
 			if(typeof method === "string") {
@@ -358,6 +499,12 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Getter/Setter of the data being sent in a request
+	 * @method
+	 * @param {object|undefined} data - the data to be sent
+	 * @returns {object|APGateway}
+	 */
 	data: function(data) {
 		if(data) {
 			this.config.data = data;
@@ -367,6 +514,12 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Getter/Setter of the type of data expected in the response
+	 * @method
+	 * @param {string|undefined} dataType - the data type or undefined if used as a getter
+	 * @returns {string|APGateway}
+	 */
   dataType: function(dataType) {
     if(dataType) {
 			if(typeof dataType === "string") {
@@ -378,17 +531,35 @@ extend(APGateway.prototype, {
 		return this;
   },
 
+	/**
+	 * Getter/Setter of the type of data to send in the request
+	 * @method
+	 * @param {string|undefined} contentType - the data type or undefined if used as a getter
+	 * @returns {string|APGateway}
+	 */
 	contentType: function(contentType) {
-		if(contentType) {
-			if(typeof contentType === "string") {
-				this.config.contentType = contentType;
+		var headers, contentTypeHeader;
+		if (contentType) {
+			if (typeof contentType === 'string') {
+				this.headers({'Content-Type': contentType});
 			}
 		} else {
-			return this.config.contentType;
+			headers = this.headers();
+			if (headers) {
+				contentTypeHeader = headers['Content-Type'];
+			}
+			return contentTypeHeader;
 		}
 		return this;
 	},
 
+	/**
+	 * Adds an object containing headers key/value pairs to the current headers to send in the request
+	 * If argument is undefined it will return the current headers object
+	 * @method
+	 * @param {object|undefined} headers
+	 * @returns {string|APGateway}
+	 */
 	headers: function(headers) {
 		if(headers) {
 			if(typeof headers === "object") {
@@ -400,6 +571,12 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Getter/Setter for withCredentials flag, it will only set the value is a type boolean is passed
+	 * @method
+	 * @param {boolean|undefined} withCredentials
+	 * @returns {boolean|APGateway}
+	 */
 	withCredentials: function(withCredentials) {
 		if(typeof withCredentials === "boolean") {
 			this.config.withCredentials = withCredentials;
@@ -409,6 +586,13 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Getter/Setter for silent fail flag, it will only set the value if a boolean is passed
+	 * If true, the APGateway will catch any errors triggered from a request and fail silently
+	 * @method
+	 * @param {boolean|undefined} silent
+	 * @returns {boolean|APGateway}
+	 */
 	silentFail: function(silent) {
 		if(typeof silent === "boolean") {
 			this.config.silentFail = silent;
@@ -418,15 +602,27 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
-    cache: function(active) {
-        if(typeof active === "boolean") {
-            this.config.cache = active;
-        } else {
-            return this.config.cache;
-        }
-        return this;
-    },
+	/**
+	 * Getter/Setter for caching flag, it will only set the value if a boolean is passed
+	 * @method
+	 * @param {boolean|undefined} active
+	 * @returns {boolean|APGateway}
+	 */
+  cache: function(active) {
+      if(typeof active === "boolean") {
+          this.config.cache = active;
+      } else {
+          return this.config.cache;
+      }
+      return this;
+  },
 
+	/**
+	 * Creates a new instance of APGateway with all configuration copied from the original one
+	 * Configuration is not deeply copied.
+	 * @method
+	 * @returns {APGateway} - the copy of the APGateway
+	 */
 	copy: function() {
 		var gw = new APGateway(this.config);
 		gw.headers(copy(this.headers()));
@@ -437,6 +633,13 @@ extend(APGateway.prototype, {
 		return gw;
 	},
 
+	/**
+	 * Getter/Setter of request transformations, it will only set if the argument is an instance of Array
+	 * Request transformations are a pipeline of functions to be applied to the request object before sent
+	 * @method
+	 * @param {Array} transformations - the transformations to use on the request
+	 * @returns {Array|APGateway}
+	 */
 	requestTransformations: function(transformations) {
 		if(transformations) {
 			if(transformations instanceof Array) {
@@ -448,6 +651,13 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Getter/Setter of response transformations, it will only set if the argument is an instance of Array
+	 * Response transformations are a pipeline of functions to be applied to the response object when the request comes back
+	 * @method
+	 * @param {Array} transformations - the transformations to use on the response
+	 * @returns {Array|APGateway}
+	 */
 	responseTransformations: function(transformations) {
 		if(transformations) {
 			if(transformations instanceof Array) {
@@ -459,6 +669,12 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Adds a request transformation to the current pipeline
+	 * @method
+	 * @param {function} transformation - the transformation to add
+	 * @returns {APGateway}
+	 */
 	addRequestTransformation: function(transformation) {
 		if(transformation && typeof transformation === "function") {
 			this.config.transformations.request.push(transformation);
@@ -466,6 +682,12 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
+	/**
+	 * Adds a response transformation to the current pipeline
+	 * @method
+	 * @param {function} transformation - the transformation to add
+	 * @returns {APGateway}
+	 */
 	addResponseTransformation: function(transformation) {
 		if(transformation && typeof transformation === "function") {
 			this.config.transformations.response.push(transformation);
@@ -473,12 +695,34 @@ extend(APGateway.prototype, {
 		return this;
 	},
 
-    hpkp: function(options) {
-        var header = hpkp(options.sha256s, options.maxAge, options.includeSubdomains, options.reportOnly, options.reportUri);
-        this.headers(header);
-        return this;
-    },
+	/**
+	 * Sets Http public key pinning headers on the APGateway
+	 * @method
+	 * @param {object} options
+	 * 			hpkp options must include:
+	 * 			{
+	 *				sha256s {Array} - two sha256 encoded keys (one is used as backup)
+	 *				maxAge {number} - max amount of time in seconds that the browser will enforce the specified public key
+ 	 *			}
+	 *			other optional keys:
+	 *			{
+	 *				includeSubdomains {boolean} - whether to enfore public key rule on subdomains
+	 *				reportOnly {boolean} - whether to use Public-Key-Pins-Report-Only mode instead of Public-Key-Pins
+	 *				reportUri {string} - the URI to report failures to
+	 *			}
+	 * @returns {APGateway}
+	 */
+  hpkp: function(options) {
+      var header = hpkp(options.sha256s, options.maxAge, options.includeSubdomains, options.reportOnly, options.reportUri);
+      this.headers(header);
+      return this;
+  },
 
+	/**
+	 * Execute the process of sending a request, including caching, applying the transformation pipeline, etc.
+	 * @method
+	 * @returns {Promise}
+	 */
 	execute: function() {
 		var i;
 		var reqTrans = this.config.transformations.request,
@@ -499,39 +743,45 @@ extend(APGateway.prototype, {
 		}
 		request = new APRequest(options);
 
-        requestKey = request.fullUrl();
+    requestKey = request.fullUrl();
 
-        if(this.config.cache && request.method === "GET") {
-            return APGateway.RequestCache.get(requestKey).then(bind(this, function(value) {
-                if(value !== undefined) {
-                    var res = new APResponse();
-                    extend(res, value);
-                    return res;
-                } else {
-                    return this.sendRequest(request);
-                }
-            }));
-        } else {
-            return this.sendRequest(request);
-        }
+    if(this.config.cache && request.method === "GET") {
+        return APGateway.RequestCache.get(requestKey).then(bind(this, function(value) {
+            if(value !== undefined) {
+                var res = new APResponse();
+                extend(res, value);
+                return res;
+            } else {
+                return this.sendRequest(request);
+            }
+        }));
+    } else {
+        return this.sendRequest(request);
+    }
 	},
 
-    sendRequest: function(request) {
-        var self = this;
-        return new Es6Promise(function(resolve, reject) {
-            APGateway.Queue.queue(request, function(req) {
-                var responseTransformations = self.responseTransformations();
-                var promise = req.send();
-                for(var i=0; i<responseTransformations.length; i++) {
-                    promise.then(responseTransformations[i]);
-                }
-                if(self.silentFail()) {
-                    promise.catch(function(e) { return; });
-                }
-                resolve(promise);
-            });
-        });
-    }
+	/**
+	 * Send the request to the queue and returns a Promise to be resolved with the response
+	 * @method
+	 * @param {APRequest} - the request to send
+	 * @returns {Promise}
+	 */
+  sendRequest: function(request) {
+      var self = this;
+      return new Es6Promise(function(resolve, reject) {
+          APGateway.Queue.queue(request, function(req) {
+              var responseTransformations = self.responseTransformations();
+              var promise = req.send();
+              for(var i=0; i<responseTransformations.length; i++) {
+                  promise.then(responseTransformations[i]);
+              }
+              if(self.silentFail()) {
+                  promise.catch(function(e) { return; });
+              }
+              resolve(promise);
+          });
+      });
+  }
 });
 
 module.exports = APGateway;
@@ -539,6 +789,11 @@ module.exports = APGateway;
 },{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
+/**
+ * Decodes a response's data from XML or JSON into an object, based on the content type of the response (which is the data type of the request that originated it)
+ * @param {APResponse}
+ * @returns {APResponse}
+ */
 function decode(response) {
 	if(typeof response.parsers === "object") {
 		switch(response.contentType) {
@@ -548,18 +803,31 @@ function decode(response) {
 			case "json":
 				response.data = response.parsers.json.parse(response.data);
 				break;
-		}	
+		}
 	}
 	return response;
 }
 
 module.exports = decode;
+
 },{}],6:[function(require,module,exports){
 "use strict";
 
+/**
+ * Encodes a request's data into XML, JSON or FormData based on the request content type
+ * @param {APRequest}
+ * @returns {APRequest}
+ */
 function encode(request) {
-	if(request.method !== "GET") {
-		switch(request.contentType) {
+	var	headers = request.headers,
+			contentType;
+
+	if (headers) {
+		contentType = headers['Content-Type'];
+	}
+
+	if (contentType && (request.method !== 'GET')) {
+		switch (contentType) {
 			case "application/x-www-form-urlencoded; charset=UTF-8":
 				request.data = request.parsers.form.serialize(request.data);
 				break;
@@ -575,7 +843,7 @@ function encode(request) {
 		if(typeof request.data === "object") {
 			for(var key in request.data) {
 				if(request.data.hasOwnProperty(key)) {
-					paramArray.push(key+"="+request.data[key]); 
+					paramArray.push(key+"="+request.data[key]);
 				}
 			}
 			params = paramArray.sort().join("&");
@@ -587,14 +855,25 @@ function encode(request) {
 		}
 		request.url.search = params;
 	}
-	return request;	
+	return request;
 }
 
 
 module.exports = encode;
+
 },{}],7:[function(require,module,exports){
 "use strict";
 
+/**
+ * Validates that the arguments passed are complete and of the correct type
+ * Returns true if arguments valid, false otherwise
+ * @param {Array} sha256s - an array of two sha256 encoded string keys
+ * @param {number} maxAge
+ * @param {boolean} includeSubdomains - optional
+ * @param {boolean} reportOnly - optional, but if included there must be a valid reportUri argument
+ * @param {string} reportUri - optional
+ * @returns {boolean} - true if arguments are valid, false otherwise
+ */
 function validateArguments(sha256s, maxAge, includeSubdomains, reportOnly, reportUri) {
     if(!sha256s ||  !(sha256s instanceof Array) || sha256s.length < 2) {
         return false;
@@ -608,6 +887,11 @@ function validateArguments(sha256s, maxAge, includeSubdomains, reportOnly, repor
     return true;
 }
 
+/**
+ * Returns the string name of the header to use in hpkp
+ * @param {boolean} reportOnly - whether the mode is report-only
+ * @returns {string} - the http header name for hpkp
+ */
 function headerName(reportOnly) {
     var name = "Public-Key-Pins";
     if(reportOnly) {
@@ -616,25 +900,42 @@ function headerName(reportOnly) {
     return name;
 }
 
+/**
+ * Returns the value to send within the hpkp header
+ * @param {Array} sha256s - an array of two sha256 encoded string representing the public key to pin (one of them is used as backup)
+ * @param {number} maxAge - the maximum ammount of time, in seconds, that the public key pinning should be enforced by the browser
+ * @param {boolean} includeSubdomains - optional, whether the pinning rule should apply to subdomains as well
+ * @param {string} reportUri - optional, the URI string to send error reports to
+ * @returns {string} - the full value to send in the hpkp header
+ */
 function headerValue(sha256s, maxAge, includeSubdomains, reportUri) {
     var values = [];
     for(var i=0 ; i < sha256s.length ; i++) {
         values.push('pin-sha256="' + sha256s[i] + '"');
     }
-    
+
     values.push('max-age=' + Math.round(maxAge));
-    
+
     if(!!includeSubdomains) {
         values.push('includeSubdomains');
     }
-    
+
     if(reportUri) {
         values.push('report-uri="' + reportUri + '"');
     }
-    
+
     return values.join('; ');
 }
 
+/**
+ * Wrapper function for the entire module
+ * @param {Array} sha256s - an array of two sha256 encoded string representing the public key to pin (one of them is used as backup)
+ * @param {number} maxAge - the maximum ammount of time, in seconds, that the public key pinning should be enforced by the browser
+ * @param {boolean} includeSubdomains - optional, whether the pinning rule should apply to subdomains as well
+ * @param {boolean} reportOnly - wheter the mode is report-only
+ * @param {string} reportUri - optional, the URI string to send error reports to
+ * @return {object} - an object with one key/value which are the header name as key, and the header value as value
+ */
 module.exports = function hpkp(sha256s, maxAge, includeSubdomains, reportOnly, reportUri) {
     if(validateArguments(sha256s, maxAge, includeSubdomains, reportOnly, reportUri)) {
         var headerName = headerName(reportOnly);
@@ -645,23 +946,29 @@ module.exports = function hpkp(sha256s, maxAge, includeSubdomains, reportOnly, r
     }
     return {};
 };
+
 },{}],8:[function(require,module,exports){
 "use strict";
 
+/**
+ * Encodes a javascript object as form-data
+ * @param {object} data
+ * @returns {string} - encoded data
+ */
 function encodeToFormData(data) {
 	var urlEncodedData = "", urlEncodedDataPairs = [];
-	
+
 	if(data) {
 		if(typeof data === "object") {
 			// We turn the data object into an array of URL encoded key value pairs.
 			for(var name in data) {
 				urlEncodedDataPairs.push(encodeURIComponent(name) + '=' + encodeURIComponent(data[name]));
-			}	
-			// We combine the pairs into a single string and replace all encoded spaces to 
+			}
+			// We combine the pairs into a single string and replace all encoded spaces to
 			// the plus character to match the behaviour of the web browser form submit.
 			urlEncodedData = urlEncodedDataPairs.join('&').replace(/%20/g, '+');
 		}
-	}	
+	}
 	return urlEncodedData;
 }
 
@@ -674,13 +981,25 @@ module.exports = {
 		return data;
 	}
 };
+
 },{}],9:[function(require,module,exports){
 "use strict";
 
 module.exports = {
+	/**
+	 * Serializes a javascript object as a JSON string
+	 * @param {object} data
+	 * @returns {string} - encoded data
+	 */
 	serialize: function(data) {
 		return (data) ? JSON.stringify(data) : undefined;
 	},
+
+	/**
+	 * Converts a JSON string into a javascript object
+	 * @param {string} json
+	 * @returns {object}
+	 */
 	parse: function(json) {
 		var parsed;
 		try {
@@ -691,6 +1010,7 @@ module.exports = {
 		return parsed;
 	}
 };
+
 },{}],10:[function(require,module,exports){
 "use strict";
 
@@ -700,6 +1020,10 @@ var bind            = require("../utils/bind");
 var Interval        = require("../utils/Interval");
 var APQueueMessage  = require("./APQueueMessage");
 
+/**
+ * Asynchronous queue used to dispatch requests to an API
+ * @constructor
+ */
 function APQueue() {
     this.active = true;
     this.messages = [];
@@ -708,22 +1032,36 @@ function APQueue() {
 }
 
 extend(APQueue.prototype, {
-    
+
+    /**
+     * Adds an element to the queue
+     * A callback can be passed which will be called when that element is dispatched from the queue
+     * @method
+     * @param {any} element - the element to queue
+     * @param {function} fn - optional, callback to call when the element is dequeued
+     * @returns {APQueueMessage}
+     */
     queue: function(element, fn) {
         var message = new APQueueMessage(element);
         if(typeof fn === "function") {
             message.on("dispatch", fn);
         }
-        
+
         this.messages.push(message);
-        
+
         if(this.active && this.messages.length === 1) {
             this.dequeue();
         }
-        
+
         return message;
     },
-    
+
+    /**
+     * Flushes the queue
+     * Flushing is done using a async loop that will be throttled based on the config of APQueue
+     * @method
+     * @returns {APQueue}
+     */
     dequeue: function() {
         if(this.dequeueLoop === null) {
             this.dequeueLoop = new Interval(bind(this, function() {
@@ -738,25 +1076,50 @@ extend(APQueue.prototype, {
         }
         return this;
     },
-    
+
+    /**
+     * Pauses the queue, in other words it blocks the dequeuing loop from running
+     * @method
+     * @returns {APQueue}
+     */
     pause: function() {
         this.active = false;
         return this;
     },
-    
+
+    /**
+     * Removes blocks on the dequeuing loop and restarts the loop
+     * @method
+     * @returns {APQueue}
+     */
     resume: function() {
         this.active = true;
         this.dequeue();
         return this;
     },
-    
+
+    /**
+     * Sets the time in milliseconds used to throttle the dequeuing loop
+     * Throttling prevents an API to become flooded in situations when the queue has accumulated a lot of requests
+     * @method
+     * @param {number} milliseconds
+     * @returns {APQueue}
+     */
     throttleBy: function(milliseconds) {
         if(typeof milliseconds === "number") {
             this.throttleDequeueBy = milliseconds;
         }
         return this;
     },
-    
+
+    /**
+     * Returns all of the elements in the queue
+     * Its main purpose is to allow users to persist the contents of the queue to a database or localStorage if they choose to
+     * The queue must be paused to be able to export because otherwise looping over its contents can be unsafe
+     * @method
+     * @returns {Array} - the contents of the queue
+     * @throws {Error} - if the queue is not paused before exporting
+     */
     export: function() {
         if(!this.active) {
             var len = this.messages.length;
@@ -768,11 +1131,10 @@ extend(APQueue.prototype, {
             throw new Error("APQueue must be paused to exportable");
         }
     }
-    
+
 });
 
 module.exports = APQueue;
-
 
 },{"../utils/Interval":19,"../utils/bind":20,"../utils/extend":22,"./APQueueMessage":11,"tiny-emitter":25}],11:[function(require,module,exports){
 "use strict";
@@ -780,6 +1142,10 @@ module.exports = APQueue;
 var EventEmitter 	= require("tiny-emitter");
 var extend          = require("../utils/extend");
 
+/**
+ * Wraps an element in an EventEmitter
+ * @constructor
+ */
 function APQueueMessage(content) {
     this.content = content;
 }
@@ -788,10 +1154,13 @@ APQueueMessage.prototype = new EventEmitter();
 APQueueMessage.prototype.constructor = APQueueMessage;
 
 module.exports = APQueueMessage;
+
 },{"../utils/extend":22,"tiny-emitter":25}],12:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	    = require("native-promise-only");
+// The http module is only used in a node environment, when using with browserify
+// it will be replaced with a shim (see package.json "browser" and shims folder)
 var http			= require("http");
 
 var extend			= require("../utils/extend");
@@ -799,7 +1168,11 @@ var copy			= require("../utils/copy");
 var bind 			= require("../utils/bind");
 var APResponse		= require("../response/APResponse");
 
-
+/**
+ * Represents a single request
+ * @constructor
+ * @param {object} options - the configuration for the request (see APGateway)
+ */
 function APRequest(options) {
 	options = options || {};
 	extend(this, options);
@@ -811,6 +1184,11 @@ function APRequest(options) {
  */
 extend(APRequest.prototype, {
 
+	/**
+	 * Builds a url (without the protocol) from the individual pieces
+	 * @method
+	 * @returns {string} - the url string
+	 */
 	urlPath: function() {
     var path = (this.url.pathname) ? this.url.pathname : "";
 		path += (this.url.search) ? this.url.search : "";
@@ -818,6 +1196,11 @@ extend(APRequest.prototype, {
     return path;
   },
 
+	/**
+	 * Builds a url (with the protocol), this method is used to append the url to the APResponse before returning it
+	 * @method
+	 * @returns {string} - the url string
+	 */
   fullUrl: function() {
       var url = this.url.protocol + "//" + this.url.hostname;
       if(this.url.port !== null && this.url.port !== undefined && this.url.port !== "") {
@@ -827,15 +1210,16 @@ extend(APRequest.prototype, {
       return url;
   },
 
+	/**
+	 * Sends the request using http module
+	 * @method
+	 * @returns {Promise}
+	 */
 	send: function() {
     var path = this.urlPath();
-
 		var headers = copy(this.headers);
-		if(typeof this.contentType === "string") {
-			headers["Content-Type"] = this.contentType;
-		}
-
 		var self = this;
+		
 		return new Es6Promise(function(resolve, reject) {
 			var req = http.request({
 				protocol: self.url.protocol,
@@ -880,6 +1264,14 @@ module.exports = APRequest;
 
 var extend	= require("../utils/extend");
 
+/**
+ * Represents a single response to a request
+ * @constructor
+ * @param {HttpResponse} response - the actual response from the http module
+ * @param {string} dataType - the type of content expected in the response
+ * @param {string} data - the full data from the response
+ * @param {boolean} cache - whether the response should be cached
+ */
 function APResponse(response, dataType, data, cache) {
 	extend(
 		this,
@@ -894,10 +1286,11 @@ APResponse.defaults = {
 	statusMessage: "",
 	data: {},
 	headers: {},
-    cache: false
+  cache: false
 };
 
 module.exports = APResponse;
+
 },{"../utils/extend":22}],14:[function(require,module,exports){
 "use strict";
 
@@ -907,6 +1300,11 @@ var bind			= require("../../utils/bind");
 var HttpResponse	= require("./HttpResponse");
 var EventEmitter 	= require("tiny-emitter");
 
+/**
+ * Tries to simulate the minimal behaviour of node's http.ClientRequest
+ * @constructor
+ * @param {object} options - the request configuration
+ */
 function HttpRequest(options) {
 	this.url = "";
 	this.method = options.method;
@@ -941,10 +1339,19 @@ HttpRequest.env = {
 };
 
 extend(HttpRequest.prototype, {
+
+	/**
+	 * Sets the data to send in a request
+	 * @method
+	 * @param {string} data - the data to send
+	 */
 	write: function(data) {
 		this.data = data;
 	},
 
+	/**
+	 * Sends the request
+	 */
 	end: function() {
 		var xhr;
 
@@ -992,6 +1399,10 @@ extend(HttpRequest.prototype, {
 		xhr.send(this.data);
 	},
 
+	/**
+	 * Detects the object type to use to send the request
+	 * @method
+	 */
 	detectEnv: function() {
 		if(typeof XMLHttpRequest !== "undefined") {
 			this.env = HttpRequest.env.modern;
@@ -1002,6 +1413,14 @@ extend(HttpRequest.prototype, {
 		}
 	},
 
+	/**
+	 * Adds a function to execute when the state of the request changes
+	 * Its needed since the different type of objects like XMLHttpRequest and XDomainRequest
+	 * use different fields to set the change listener
+	 * @method
+	 * @param {XMLHttpRequest|XDomainRequest|ActiveXObject} xhr
+	 * @param {function} fn - callback
+	 */
 	addOnChangeListener: function(xhr, fn) {
 		switch(this.env) {
 			case HttpRequest.env.modern:
@@ -1024,6 +1443,11 @@ module.exports = HttpRequest;
 var extend		= require("../../utils/extend");
 var EventEmitter = require("tiny-emitter");
 
+/**
+ * Tries to emulate the minimum needed functionality of node's http.IncomingMessage object as it is used in the "http" module
+ * @constructor
+ * @param {XMLHttpRequest|XDomainRequest|ActiveXObject} xhr - the native request object that originated the response
+ */
 function HttpResponse(xhr) {
 	this.statusCode = xhr.status;
 	this.statusMessage = xhr.statusText;
@@ -1039,6 +1463,13 @@ HttpResponse.prototype = new EventEmitter();
 HttpResponse.prototype.constructor = HttpResponse;
 
 extend(HttpResponse.prototype, {
+
+	/**
+	 * Parses the response headers string into key/value pairs
+	 * @method
+	 * @param {string} headerStr - the string with the response headers
+	 * @returns {object} - headers key/value pairs
+	 */
 	parseHeaders: function (headerStr) {
 		var headers = {};
 		if (!headerStr) {
@@ -1059,6 +1490,7 @@ extend(HttpResponse.prototype, {
 });
 
 module.exports = HttpResponse;
+
 },{"../../utils/extend":22,"tiny-emitter":25}],16:[function(require,module,exports){
 "use strict";
 
@@ -1066,50 +1498,74 @@ var bind 			= require("../../utils/bind");
 var extend			= require("../../utils/extend");
 var HttpRequest		= require("./HttpRequest");
 
-
+/**
+ * Tries to emulate the behaviour of node's "http" module, this allows for a common interface when sending http requests
+ * both in node and browser. It uses XMLHttpRequest under the hood
+ */
 var Http = {};
 
 extend(Http, {
+	/**
+	 * Creates an HttpRequest object
+	 * @param {object} options - the request configuration
+	 * @param {function} callback - the function to call with the response so it can be handled
+	 * @returns {HttpRequest}
+	 */
 	request: function(options, callback) {
 		var request = new HttpRequest(options);
 		if(typeof callback === "function") {
 			request.on("done", callback);
 		}
-		return request;	
+		return request;
 	}
 });
 
 module.exports = Http;
+
 },{"../../utils/bind":20,"../../utils/extend":22,"./HttpRequest":14}],17:[function(require,module,exports){
 "use strict";
 
+/**
+ * Tries to emulate the minimum needed functionality of node's "url" module
+ */
 var Url = {
+	/**
+	 * Breaks down a url string into an object containg all its pieces
+	 * @param {string} url
+	 * @returns {object}
+	 */
 	parse: function(url) {
 		var parsed = {};
 		if(typeof url === "string") {
 			var parser = document.createElement('a');
 			parser.href = url;
-			
+
 			parsed.href = url;
 			parsed.protocol = parser.protocol;
 			parsed.hostname = parser.hostname;
-			parsed.port = parser.port;    
+			parsed.port = parser.port;
 			parsed.pathname = parser.pathname;
-			parsed.search = parser.search;  
+			parsed.search = parser.search;
 			parsed.hash = parser.hash;
 		}
-		
+
 		return parsed;
 	}
 };
 
 
 module.exports = Url;
+
 },{}],18:[function(require,module,exports){
 "use strict";
 
 module.exports = {
 
+	/**
+	 * Serializes an XML object into a string using browser specific objects
+	 * @param {object} xml - the xml object to serialize
+	 * @returns {string} - serialized xml
+	 */
 	serialize: function(xml) {
 		var result;
 		if(xml) {
@@ -1123,6 +1579,11 @@ module.exports = {
 		return result;
 	},
 
+	/**
+	 * Converts a string of xml into an XML object
+	 * @param {string} xmlstring
+	 * @returns {object} - the xml object
+	 */
 	parse: function(xmlstring) {
 		var result;
 		if(typeof xmlstring === "string") {
@@ -1141,11 +1602,18 @@ module.exports = {
 },{}],19:[function(require,module,exports){
 "use strict";
 
+/**
+ * Interval function that fixes some shortcommings of the standard setInterval function
+ * @param {function} func - the function to run on each iteration of the interval
+ * @param {number} wait - the interval wait time in milliseconds
+ * @param {number} times - the amount of repetitions
+ * @param {boolean} immediate - should the function run immediately or be run after a wait
+ */
 function Interval(func, wait, times, immediate) {
     this.timeout = null;
     this.canceled = false;
     var self = this;
-    
+
     var interv = function(w, t){
         return function(){
             if(typeof t === "undefined" || t-- > 0){
@@ -1162,27 +1630,34 @@ function Interval(func, wait, times, immediate) {
             }
         };
     }(wait, times);
-    
+
     this.cancel = function() {
         this.canceled = true;
         clearTimeout(this.timeout);
     };
-    
+
     this.timeout = setTimeout(interv, wait);
-    
+
     if(!!immediate) {
         interv();
     } else {
         this.timeout = setTimeout(interv, wait);
-    } 
+    }
 
-    
+
 }
 
 module.exports = Interval;
+
 },{}],20:[function(require,module,exports){
 "use strict";
 
+/**
+ * Binds a function to a context
+ * @param {object} context
+ * @param {function} fn
+ * @returns {function} - the bound function
+ */
 module.exports = function bind(context, fn) {
 	if(context && fn && typeof fn === "function") {
 		return function() {
@@ -1190,13 +1665,19 @@ module.exports = function bind(context, fn) {
 		};
 	}
 };
+
 },{}],21:[function(require,module,exports){
 "use strict";
 
+/**
+ * Returns a shallow copy of an object/Array
+ * @param {any} src - the object to copy
+ * @returns {any} - the copy
+ */
 module.exports = function copy(src) {
 	var copied;
 	if(src instanceof Array) {
-		copied = src.slice(0, src.length);	
+		copied = src.slice(0, src.length);
 	} else if(typeof src === "object") {
 		copied = {};
 		for(var key in src) {
@@ -1209,11 +1690,19 @@ module.exports = function copy(src) {
 	}
 	return copied;
 };
+
 },{}],22:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
 
+/**
+ * Extends an object with the key/value pairs of other objects
+ * It accepts any number of objects to extend the destination with
+ * @param {object} destination - the first argument passed is the object that will be extended
+ * @param {object} sources... - one or many object arguments passed to extend the destination with
+ * @returns {object} - the extended object
+ */
 module.exports = function extend() {
 	var args = toArray(arguments), dest = args[0], src;
 	if(typeof dest === "object" || typeof dest === "function") {
@@ -1228,15 +1717,22 @@ module.exports = function extend() {
 			}
 		}
 	}
-	
+
 	return dest;
 };
+
 },{"./toArray":23}],23:[function(require,module,exports){
 "use strict";
 
+/**
+ * Coverts arguments to array
+ * @param {arguments} arr - the arguments to convert to array
+ * @returns {Array}
+ */
 module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
+
 },{}],24:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
