@@ -116,9 +116,16 @@ describe("APGateway", function() {
 
 	it("should allow to get/set headers", function() {
 		gateway.headers({ "Test-Header": "Test-Header-Value" });
-		expect(gateway.headers()).to.eql({ "Test-Header": "Test-Header-Value" });
+		expect(gateway.headers()).to.eql({
+			'Content-Type': 'application/json',
+			"Test-Header": "Test-Header-Value"
+		});
 		gateway.headers({ "Another-Header": "Another-Header-Value" });
-		expect(gateway.headers()).to.eql({ "Test-Header": "Test-Header-Value", "Another-Header": "Another-Header-Value" });
+		expect(gateway.headers()).to.eql({
+			'Content-Type': 'application/json',
+			"Test-Header": "Test-Header-Value",
+			"Another-Header": "Another-Header-Value"
+		});
 	});
 
 	it("should be able to make copies of itself", function() {
