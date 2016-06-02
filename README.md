@@ -1,7 +1,6 @@
 # justapis-javascript-sdk
 
 [![npm version](https://img.shields.io/npm/v/justapis-javascript-sdk.svg)](https://www.npmjs.com/package/justapis-javascript-sdk)
-
 [![Build Status](https://img.shields.io/travis/AnyPresence/justapis-javascript-sdk.svg)](https://travis-ci.org/AnyPresence/justapis-javascript-sdk)
 
 A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or the browser.
