@@ -1,8 +1,10 @@
-#JustAPIs JavaScript SDK
+# justapis-javascript-sdk
 
-##Overview
+[![npm version](https://img.shields.io/npm/v/justapis-javascript-sdk.svg)](https://www.npmjs.com/package/justapis-javascript-sdk)
+[![Build Status](https://img.shields.io/travis/AnyPresence/justapis-javascript-sdk.svg)](https://travis-ci.org/AnyPresence/justapis-javascript-sdk)
 
-Lightweight JavaScript SDK to connect to a JustAPIs gateway through a web client.
+A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or the browser.
+
 
 ##Dependencies
 
@@ -30,7 +32,7 @@ $ npm install justapis-javascript-sdk
 The SDK is built with browserify. If you would like to add a single bundled file you can find it in the `dist` folder.
 
 ```html
-<script src="justapis-javascript-sdk/dist/justapis-javascript-sdk-v0.1.0.js"></script>
+<script src="justapis-javascript-sdk/dist/justapis-javascript-sdk.min.js"></script>
 ```
 
 Else, if you are using browserify in your project you probably prefer to use `require` to load the dependency.
