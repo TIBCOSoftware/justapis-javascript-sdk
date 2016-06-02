@@ -267,9 +267,10 @@ method: "GET",
 silentFail: true,
 cache: true,
 dataType: "json",
-contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 data: {},
-headers: {},
+headers: {
+	'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+},
 parsers: {
     json: JSONParser,
     form: FormDataParser,
