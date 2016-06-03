@@ -1,7 +1,8 @@
 {
   "name": "justapis-javascript-sdk",
-  "version": "0.2.0",
-  "description": "",
+  "version": "0.2.1",
+  "description": "A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or the browser.",
+  "repository": "AnyPresence/justapis-javascript-sdk",
   "main": "index.js",
   "scripts": {
     "test": "grunt test"
