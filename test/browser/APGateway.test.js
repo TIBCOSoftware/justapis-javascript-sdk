@@ -311,4 +311,55 @@ describe("APGateway", function() {
 
     });
 
+
+		// TODO:  can't connect to public broker over wss without username/password
+		// This should always fail until we can find test credentials.
+		it('should create an MQTT instance and connect over wss', function (done) {
+			this.timeout(5000);
+			sinon.spy(gateway, 'mqtt');
+			gateway.url('wss://broker.hivemq.com:8000');
+			var client = gateway.mqtt();
+			client.on('connect', function () {
+				client.end();
+				expect(gateway.mqtt.calledOnce).to.be.true;
+				expect(gateway.mqtt.returnValues[0]).to.exist;
+				expect(gateway.mqtt.threw()).to.be.false;
+				gateway.mqtt.restore();
+				done();
+			});
+		});
+
+		it('should create an MQTT instance and connect over ws', function (done) {
+			this.timeout(5000);
+			sinon.spy(gateway, 'mqtt');
+			gateway.url('ws://broker.hivemq.com:8000');
+			var client = gateway.mqtt();
+			client.on('connect', function () {
+				client.end();
+				expect(gateway.mqtt.calledOnce).to.be.true;
+				expect(gateway.mqtt.returnValues[0]).to.exist;
+				expect(gateway.mqtt.threw()).to.be.false;
+				gateway.mqtt.restore();
+				done();
+			});
+		});
+
+		it('should send and receive MQTT messages', function (done) {
+			this.timeout(20000);
+			sinon.spy(gateway, 'mqtt');
+			gateway.url('ws://broker.hivemq.com:8000');
+			var client = gateway.mqtt();
+			client.on('message', function (topic, message) {
+			  // message is Buffer
+			  expect(message.toString()).to.equal('Hello mqtt');
+			  client.end();
+				gateway.mqtt.restore();
+				done();
+			});
+			client.on('connect', function () {
+			  client.subscribe('gateway-mqtt');
+			  client.publish('gateway-mqtt', 'Hello mqtt');
+			});
+		});
+
 });

@@ -19,6 +19,7 @@ Dependencies
 
 * [Native Promise Only](https://github.com/getify/native-promise-only)
 * [Tiny Emitter](https://github.com/scottcorgan/tiny-emitter)
+* [MQTT.js](https://github.com/mqttjs/MQTT.js)
 * [xml2js](https://www.npmjs.com/package/xml2js) (Node-only)
 * [xmlserializer](https://www.npmjs.com/package/xmlserializer) (Node-only)
 
@@ -31,6 +32,7 @@ Features
 * HTTP Public Key Pinning
 * Per-request caching
 * Pausable/Resumable asynchronous request queue
+* MQTT client support
 
 
 Install via NPM
@@ -297,6 +299,36 @@ persistedRequests.forEach(function(requestData) {
     .catch(function(error) {
         // There was an error
     });
+});
+```
+
+
+### MQTT
+
+Once instantiated, the MQTT client behaves exactly as described in
+[the MQTT.js documentation](https://github.com/mqttjs/MQTT.js).
+
+Supported protocols include `mqtt`, `ws`, and `wss`.  Typically `mqtt` is used
+by Node.js and `wss`/`ws` by the browser.
+
+Example MQTT usage:
+
+```javascript
+// Create a Gateway and specify a host, optionally including a protocol.
+// If protocol is omitted, `wss` is used.
+var gateway = new APGateway({url: 'example.net'}),
+		// Create an MQTT client instance.  Client connects automatically.
+		client = gateway.mqtt();
+
+// Interact with the MQTT client as described in the MQTT documentation.
+client.on('connect', function () {
+  client.subscribe('presence');
+  client.publish('presence', 'Hello mqtt');
+});
+client.on('message', function (topic, message) {
+  // message is Buffer
+  console.log(message.toString());
+  client.end();
 });
 ```
 

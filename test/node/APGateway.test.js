@@ -313,4 +313,36 @@ describe("APGateway", function() {
        done();
     });
 
+		it('should create an MQTT instance and connect over mqtt', function (done) {
+			sinon.spy(gateway, 'mqtt');
+			gateway.url('mqtt://broker.hivemq.com:1883');
+			var client = gateway.mqtt();
+			client.on('connect', function () {
+				client.end();
+				expect(gateway.mqtt.calledOnce).to.be.true;
+				expect(gateway.mqtt.returnValues[0]).to.exist;
+				expect(gateway.mqtt.threw()).to.be.false;
+				gateway.mqtt.restore();
+				done();
+			});
+		});
+
+		it('should send and receive MQTT messages', function (done) {
+			this.timeout(20000);
+			sinon.spy(gateway, 'mqtt');
+			gateway.url('mqtt://broker.hivemq.com:1883');
+			var client = gateway.mqtt();
+			client.on('message', function (topic, message) {
+			  // message is Buffer
+			  expect(message.toString()).to.equal('Hello mqtt');
+			  client.end();
+				gateway.mqtt.restore();
+				done();
+			});
+			client.on('connect', function () {
+			  client.subscribe('gateway-mqtt');
+			  client.publish('gateway-mqtt', 'Hello mqtt');
+			});
+		});
+
 });

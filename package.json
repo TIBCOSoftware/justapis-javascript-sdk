@@ -1,6 +1,6 @@
 {
   "name": "justapis-javascript-sdk",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or the browser.",
   "repository": "AnyPresence/justapis-javascript-sdk",
   "main": "index.js",
@@ -14,7 +14,7 @@
     "./lib/cache/persistence/APMemoryStorage": "./lib/cache/persistence/APBrowserStorage"
   },
   "engines": {
-    "node" : ">=0.10"
+    "node": ">=0.10"
   },
   "author": "AnyPresence",
   "license": "MIT",
@@ -36,6 +36,7 @@
     "watchify": "^3.6.1"
   },
   "dependencies": {
+    "mqtt": "^1.10.0",
     "native-promise-only": "^0.8.1",
     "tiny-emitter": "^1.0.2",
     "xml2js": "^0.4.15",
