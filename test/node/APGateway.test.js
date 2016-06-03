@@ -315,7 +315,7 @@ describe("APGateway", function() {
 
 		it('should create an MQTT instance and connect over mqtt', function (done) {
 			sinon.spy(gateway, 'mqtt');
-			gateway.url('mqtt://broker.hivemq.com:1883');
+			gateway.url('mqtt://broker.hivemq.com:1883/mqtt');
 			var client = gateway.mqtt();
 			client.on('connect', function () {
 				client.end();
@@ -330,7 +330,7 @@ describe("APGateway", function() {
 		it('should send and receive MQTT messages', function (done) {
 			this.timeout(20000);
 			sinon.spy(gateway, 'mqtt');
-			gateway.url('mqtt://broker.hivemq.com:1883');
+			gateway.url('mqtt://broker.hivemq.com:1883/mqtt');
 			var client = gateway.mqtt();
 			client.on('message', function (topic, message) {
 			  // message is Buffer

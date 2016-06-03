@@ -317,7 +317,7 @@ describe("APGateway", function() {
 		it('should create an MQTT instance and connect over wss', function (done) {
 			this.timeout(5000);
 			sinon.spy(gateway, 'mqtt');
-			gateway.url('wss://broker.hivemq.com:8000');
+			gateway.url('wss://broker.hivemq.com:8000/mqtt');
 			var client = gateway.mqtt();
 			client.on('connect', function () {
 				client.end();
@@ -332,7 +332,7 @@ describe("APGateway", function() {
 		it('should create an MQTT instance and connect over ws', function (done) {
 			this.timeout(5000);
 			sinon.spy(gateway, 'mqtt');
-			gateway.url('ws://broker.hivemq.com:8000');
+			gateway.url('ws://broker.hivemq.com:8000/mqtt');
 			var client = gateway.mqtt();
 			client.on('connect', function () {
 				client.end();
@@ -347,7 +347,7 @@ describe("APGateway", function() {
 		it('should send and receive MQTT messages', function (done) {
 			this.timeout(20000);
 			sinon.spy(gateway, 'mqtt');
-			gateway.url('ws://broker.hivemq.com:8000');
+			gateway.url('ws://broker.hivemq.com:8000/mqtt');
 			var client = gateway.mqtt();
 			client.on('message', function (topic, message) {
 			  // message is Buffer

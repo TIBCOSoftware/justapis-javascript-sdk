@@ -316,7 +316,7 @@ Example MQTT usage:
 ```javascript
 // Create a Gateway and specify a host, optionally including a protocol.
 // If protocol is omitted, `wss` is used.
-var gateway = new APGateway({url: 'example.net'}),
+var gateway = new APGateway({url: 'example.net/mqtt'}),
 		// Create an MQTT client instance.  Client connects automatically.
 		client = gateway.mqtt();
 

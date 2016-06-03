@@ -797,18 +797,20 @@ extend(APGateway.prototype, {
 		var protocol = this.config.url.protocol,
 				hostname = this.config.url.hostname,
 				port = this.config.url.port,
+				path = this.config.url.path,
 				mqttProtocols = ['mqtt:', 'ws:', 'wss:'],
 				url;
 
 		if (mqttProtocols.indexOf(protocol) < 0) {
 			protocol = 'wss:';
 		}
-
+		
 		url = [
 			protocol,
 			'//',
 			hostname,
-			(port ? (':' + port) : '')
+			(port ? (':' + port) : ''),
+			path
 		].join('');
 
 		return mqtt.connect(url);
