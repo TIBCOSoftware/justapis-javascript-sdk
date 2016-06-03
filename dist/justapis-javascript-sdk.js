@@ -804,7 +804,7 @@ extend(APGateway.prototype, {
 		if (mqttProtocols.indexOf(protocol) < 0) {
 			protocol = 'wss:';
 		}
-		
+
 		url = [
 			protocol,
 			'//',
@@ -812,7 +812,7 @@ extend(APGateway.prototype, {
 			(port ? (':' + port) : ''),
 			path
 		].join('');
-
+		
 		return mqtt.connect(url);
 	}
 });

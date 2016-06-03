@@ -86,8 +86,13 @@ describe("APGateway", function() {
 	});
 
 	it("should allow to get/set the url", function() {
-		gateway.url("www.foo.com");
-		expect(gateway.url()).to.equal("www.foo.com");
+		gateway.url("http://www.foo.com/");
+		expect(gateway.url()).to.equal("http://www.foo.com/");
+	});
+
+	it("should allow to get/set the url including path", function() {
+		gateway.url("http://www.foo.com/path/to/something");
+		expect(gateway.config.url.path).to.equal("/path/to/something");
 	});
 
 	it("should allow to get/set the method", function() {
