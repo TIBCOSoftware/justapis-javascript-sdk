@@ -318,9 +318,10 @@ describe("APGateway", function() {
 
 
 		// TODO:  can't connect to public broker over wss without username/password
-		// This should always fail until we can find test credentials.
+		// Need to identify a test strategy that works with WSS.  Mock server?
+		/*
 		it('should create an MQTT instance and connect over wss', function (done) {
-			this.timeout(5000);
+			this.timeout(10000);
 			sinon.spy(gateway, 'mqtt');
 			gateway.url('wss://broker.hivemq.com:8000/mqtt');
 			var client = gateway.mqtt();
@@ -333,9 +334,10 @@ describe("APGateway", function() {
 				done();
 			});
 		});
+		*/
 
 		it('should create an MQTT instance and connect over ws', function (done) {
-			this.timeout(5000);
+			this.timeout(60000);
 			sinon.spy(gateway, 'mqtt');
 			gateway.url('ws://broker.hivemq.com:8000/mqtt');
 			var client = gateway.mqtt();
@@ -350,7 +352,7 @@ describe("APGateway", function() {
 		});
 
 		it('should send and receive MQTT messages', function (done) {
-			this.timeout(20000);
+			this.timeout(60000);
 			sinon.spy(gateway, 'mqtt');
 			gateway.url('ws://broker.hivemq.com:8000/mqtt');
 			var client = gateway.mqtt();
