@@ -28,6 +28,7 @@
     "chai-as-promised": "^5.1.0",
     "commitizen": "^2.8.2",
     "cz-conventional-changelog": "^1.1.6",
+    "ghooks": "^1.2.3",
     "grunt": "^0.4.5",
     "grunt-browserify": "^4.0.1",
     "grunt-cli": "^0.1.13",
@@ -50,5 +51,10 @@
   },
   "czConfig": {
     "path": "node_modules/cz-conventional-changelog"
+  },
+  "config": {
+    "ghooks": {
+      "pre-commit": "npm run test"
+    }
   }
 }
