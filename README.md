@@ -17,9 +17,10 @@ the browser.
 Dependencies
 --------------------------------------------------------------------------------
 
+* [MQTT.js](https://github.com/mqttjs/MQTT.js)
 * [Native Promise Only](https://github.com/getify/native-promise-only)
 * [Tiny Emitter](https://github.com/scottcorgan/tiny-emitter)
-* [MQTT.js](https://github.com/mqttjs/MQTT.js)
+* [node-url](https://github.com/defunctzombie/node-url)
 * [xml2js](https://www.npmjs.com/package/xml2js) (Node-only)
 * [xmlserializer](https://www.npmjs.com/package/xmlserializer) (Node-only)
 
