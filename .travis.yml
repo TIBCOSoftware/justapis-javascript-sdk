@@ -11,6 +11,5 @@ node_js:
   - "0.10"
   - "iojs"
 before_install:
-  - phantomjs -v
-  - npm install -g phantomjs@2.1.1 grunt-cli
+  - npm install -g phantomjs-prebuilt@2.1.7 grunt-cli
   - phantomjs -v
