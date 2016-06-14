@@ -684,16 +684,12 @@ messages and automated changelogs.
 All work should be committed to a new branch off `develop`, never to a mainline
 branch directly.  When ready to commit changes, stage them as usual with:
 
-```bash
-git add .
-```
+		git add .
 
 Committing changes is a little different.  In order to ensure standardized
 commit messages across time and contributors, always use the npm script:
 
-```bash
-npm run commit
-```
+		npm run commit
 
 and follow the instructions on screen.
 
