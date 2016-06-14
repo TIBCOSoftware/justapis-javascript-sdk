@@ -190,7 +190,7 @@ extend(APCache.prototype, {
 
 module.exports = APCache;
 
-},{"../utils/bind":20,"../utils/extend":22,"./persistence/APMemoryStorage":3,"native-promise-only":57}],3:[function(require,module,exports){
+},{"../utils/bind":19,"../utils/extend":21,"./persistence/APMemoryStorage":3,"native-promise-only":56}],3:[function(require,module,exports){
 "use strict";
 
 var Es6Promise  = require("native-promise-only");
@@ -328,11 +328,11 @@ extend(APBrowserStorage.prototype, {
 
 module.exports = new APBrowserStorage();
 
-},{"../../utils/bind":20,"../../utils/extend":22,"native-promise-only":57}],4:[function(require,module,exports){
+},{"../../utils/bind":19,"../../utils/extend":21,"native-promise-only":56}],4:[function(require,module,exports){
 "use strict";
 
 var Es6Promise = require("native-promise-only"),
-		Url = require("url"),
+		Url = require("url/url"),
 		APRequest = require("../request/APRequest"),
 		APResponse = require("../response/APResponse"),
 		APCache = require("../cache/APCache"),
@@ -812,14 +812,14 @@ extend(APGateway.prototype, {
 			(port ? (':' + port) : ''),
 			path
 		].join('');
-		
+
 		return mqtt.connect(url);
 	}
 });
 
 module.exports = APGateway;
 
-},{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"mqtt":52,"native-promise-only":57,"url":17}],5:[function(require,module,exports){
+},{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":17,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"./transformations/decode":5,"./transformations/encode":6,"mqtt":51,"native-promise-only":56,"url/url":86}],5:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1169,7 +1169,7 @@ extend(APQueue.prototype, {
 
 module.exports = APQueue;
 
-},{"../utils/Interval":19,"../utils/bind":20,"../utils/extend":22,"./APQueueMessage":11,"tiny-emitter":86}],11:[function(require,module,exports){
+},{"../utils/Interval":18,"../utils/bind":19,"../utils/extend":21,"./APQueueMessage":11,"tiny-emitter":85}],11:[function(require,module,exports){
 "use strict";
 
 var EventEmitter 	= require("tiny-emitter");
@@ -1188,7 +1188,7 @@ APQueueMessage.prototype.constructor = APQueueMessage;
 
 module.exports = APQueueMessage;
 
-},{"../utils/extend":22,"tiny-emitter":86}],12:[function(require,module,exports){
+},{"../utils/extend":21,"tiny-emitter":85}],12:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	    = require("native-promise-only");
@@ -1292,7 +1292,7 @@ extend(APRequest.prototype, {
 
 module.exports = APRequest;
 
-},{"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"http":16,"native-promise-only":57}],13:[function(require,module,exports){
+},{"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"http":16,"native-promise-only":56}],13:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
@@ -1324,7 +1324,7 @@ APResponse.defaults = {
 
 module.exports = APResponse;
 
-},{"../utils/extend":22}],14:[function(require,module,exports){
+},{"../utils/extend":21}],14:[function(require,module,exports){
 "use strict";
 
 var extend			= require("../../utils/extend");
@@ -1470,7 +1470,7 @@ extend(HttpRequest.prototype, {
 
 module.exports = HttpRequest;
 
-},{"../../utils/bind":20,"../../utils/copy":21,"../../utils/extend":22,"./HttpResponse":15,"tiny-emitter":86}],15:[function(require,module,exports){
+},{"../../utils/bind":19,"../../utils/copy":20,"../../utils/extend":21,"./HttpResponse":15,"tiny-emitter":85}],15:[function(require,module,exports){
 "use strict";
 
 var extend		= require("../../utils/extend");
@@ -1524,7 +1524,7 @@ extend(HttpResponse.prototype, {
 
 module.exports = HttpResponse;
 
-},{"../../utils/extend":22,"tiny-emitter":86}],16:[function(require,module,exports){
+},{"../../utils/extend":21,"tiny-emitter":85}],16:[function(require,module,exports){
 "use strict";
 
 var bind 			= require("../../utils/bind");
@@ -1555,41 +1555,7 @@ extend(Http, {
 
 module.exports = Http;
 
-},{"../../utils/bind":20,"../../utils/extend":22,"./HttpRequest":14}],17:[function(require,module,exports){
-"use strict";
-
-/**
- * Tries to emulate the minimum needed functionality of node's "url" module
- */
-var Url = {
-	/**
-	 * Breaks down a url string into an object containg all its pieces
-	 * @param {string} url
-	 * @returns {object}
-	 */
-	parse: function(url) {
-		var parsed = {};
-		if(typeof url === "string") {
-			var parser = document.createElement('a');
-			parser.href = url;
-
-			parsed.href = url;
-			parsed.protocol = parser.protocol;
-			parsed.hostname = parser.hostname;
-			parsed.port = parser.port;
-			parsed.pathname = parser.pathname;
-			parsed.search = parser.search;
-			parsed.hash = parser.hash;
-		}
-
-		return parsed;
-	}
-};
-
-
-module.exports = Url;
-
-},{}],18:[function(require,module,exports){
+},{"../../utils/bind":19,"../../utils/extend":21,"./HttpRequest":14}],17:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -1632,7 +1598,7 @@ module.exports = {
 
 };
 
-},{}],19:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1682,7 +1648,7 @@ function Interval(func, wait, times, immediate) {
 
 module.exports = Interval;
 
-},{}],20:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1699,7 +1665,7 @@ module.exports = function bind(context, fn) {
 	}
 };
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1724,7 +1690,7 @@ module.exports = function copy(src) {
 	return copied;
 };
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 
 var toArray = require("./toArray");
@@ -1754,7 +1720,7 @@ module.exports = function extend() {
 	return dest;
 };
 
-},{"./toArray":23}],23:[function(require,module,exports){
+},{"./toArray":22}],22:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1766,7 +1732,7 @@ module.exports = function toArray(arr) {
 	return Array.prototype.slice.call(arr);
 };
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -1892,7 +1858,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function (Buffer){
 var DuplexStream = require('readable-stream/duplex')
   , util         = require('util')
@@ -2117,9 +2083,9 @@ BufferList.prototype.destroy = function () {
 module.exports = BufferList
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":28,"readable-stream/duplex":65,"util":89}],26:[function(require,module,exports){
+},{"buffer":27,"readable-stream/duplex":64,"util":90}],25:[function(require,module,exports){
 
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2231,7 +2197,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":28}],28:[function(require,module,exports){
+},{"buffer":27}],27:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -3783,14 +3749,14 @@ function blitBuffer (src, dst, offset, length) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":24,"ieee754":42,"isarray":29}],29:[function(require,module,exports){
+},{"base64-js":23,"ieee754":41,"isarray":28}],28:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],30:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3901,7 +3867,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":44}],31:[function(require,module,exports){
+},{"../../is-buffer/index.js":43}],30:[function(require,module,exports){
 (function (process,Buffer){
 var stream = require('readable-stream')
 var eos = require('end-of-stream')
@@ -4132,7 +4098,7 @@ Duplexify.prototype.end = function(data, enc, cb) {
 module.exports = Duplexify
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":60,"buffer":28,"end-of-stream":32,"inherits":43,"readable-stream":38}],32:[function(require,module,exports){
+},{"_process":59,"buffer":27,"end-of-stream":31,"inherits":42,"readable-stream":37}],31:[function(require,module,exports){
 var once = require('once');
 
 var noop = function() {};
@@ -4205,7 +4171,7 @@ var eos = function(stream, opts, callback) {
 };
 
 module.exports = eos;
-},{"once":58}],33:[function(require,module,exports){
+},{"once":57}],32:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -4281,7 +4247,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":35,"./_stream_writable":37,"core-util-is":30,"inherits":43,"process-nextick-args":59}],34:[function(require,module,exports){
+},{"./_stream_readable":34,"./_stream_writable":36,"core-util-is":29,"inherits":42,"process-nextick-args":58}],33:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -4308,7 +4274,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":36,"core-util-is":30,"inherits":43}],35:[function(require,module,exports){
+},{"./_stream_transform":35,"core-util-is":29,"inherits":42}],34:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -5204,7 +5170,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":33,"_process":60,"buffer":28,"buffer-shims":27,"core-util-is":30,"events":40,"inherits":43,"isarray":45,"process-nextick-args":59,"string_decoder/":85,"util":26}],36:[function(require,module,exports){
+},{"./_stream_duplex":32,"_process":59,"buffer":27,"buffer-shims":26,"core-util-is":29,"events":39,"inherits":42,"isarray":44,"process-nextick-args":58,"string_decoder/":84,"util":25}],35:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -5385,7 +5351,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":33,"core-util-is":30,"inherits":43}],37:[function(require,module,exports){
+},{"./_stream_duplex":32,"core-util-is":29,"inherits":42}],36:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -5914,7 +5880,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":33,"_process":60,"buffer":28,"buffer-shims":27,"core-util-is":30,"events":40,"inherits":43,"process-nextick-args":59,"util-deprecate":87}],38:[function(require,module,exports){
+},{"./_stream_duplex":32,"_process":59,"buffer":27,"buffer-shims":26,"core-util-is":29,"events":39,"inherits":42,"process-nextick-args":58,"util-deprecate":88}],37:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -5934,7 +5900,7 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":33,"./lib/_stream_passthrough.js":34,"./lib/_stream_readable.js":35,"./lib/_stream_transform.js":36,"./lib/_stream_writable.js":37,"_process":60}],39:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":32,"./lib/_stream_passthrough.js":33,"./lib/_stream_readable.js":34,"./lib/_stream_transform.js":35,"./lib/_stream_writable.js":36,"_process":59}],38:[function(require,module,exports){
 var once = require('once');
 
 var noop = function() {};
@@ -6018,7 +5984,7 @@ var eos = function(stream, opts, callback) {
 };
 
 module.exports = eos;
-},{"once":58}],40:[function(require,module,exports){
+},{"once":57}],39:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6321,7 +6287,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7030,7 +6996,7 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":61,"querystring":64}],42:[function(require,module,exports){
+},{"punycode":60,"querystring":63}],41:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -7116,7 +7082,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],43:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7141,7 +7107,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Determine if an object is Buffer
  *
@@ -7160,9 +7126,9 @@ module.exports = function (obj) {
     ))
 }
 
-},{}],45:[function(require,module,exports){
-arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],46:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],45:[function(require,module,exports){
 /* Protocol - protocol constants */
 
 /* Command code => mnemonic */
@@ -7216,7 +7182,7 @@ module.exports.WILL_QOS_SHIFT = 3;
 module.exports.WILL_FLAG_MASK = 0x04;
 module.exports.CLEAN_SESSION_MASK = 0x02;
 
-},{}],47:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 (function (Buffer){
 
 'use strict';
@@ -7834,14 +7800,14 @@ function byteLength(bufOrString) {
 module.exports = generate
 
 }).call(this,require("buffer").Buffer)
-},{"./constants":46,"buffer":28}],48:[function(require,module,exports){
+},{"./constants":45,"buffer":27}],47:[function(require,module,exports){
 
 'use strict';
 
 exports.parser          = require('./parser')
 exports.generate        = require('./generate')
 
-},{"./generate":47,"./parser":50}],49:[function(require,module,exports){
+},{"./generate":46,"./parser":49}],48:[function(require,module,exports){
 
 function Packet() {
   this.cmd = null
@@ -7855,7 +7821,7 @@ function Packet() {
 
 module.exports = Packet
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 
 var bl        = require('bl')
   , inherits  = require('inherits')
@@ -8245,7 +8211,7 @@ Parser.prototype._parseNum = function() {
 
 module.exports = Parser
 
-},{"./constants":46,"./packet":49,"bl":25,"events":40,"inherits":43}],51:[function(require,module,exports){
+},{"./constants":45,"./packet":48,"bl":24,"events":39,"inherits":42}],50:[function(require,module,exports){
 (function (process,global){
 'use strict';
 /**
@@ -9143,7 +9109,7 @@ MqttClient.prototype._nextId = function () {
 module.exports = MqttClient;
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./store":56,"_process":60,"end-of-stream":39,"events":40,"inherits":43,"mqtt-packet":48,"readable-stream":72,"reinterval":73}],52:[function(require,module,exports){
+},{"./store":55,"_process":59,"end-of-stream":38,"events":39,"inherits":42,"mqtt-packet":47,"readable-stream":71,"reinterval":72}],51:[function(require,module,exports){
 (function (process){
 'use strict';
 var MqttClient = require('../client'),
@@ -9283,7 +9249,7 @@ module.exports = connect;
 module.exports.connect = connect;
 
 }).call(this,require('_process'))
-},{"../client":51,"./tcp":53,"./tls":54,"./ws":55,"_process":60,"url":41,"xtend":99}],53:[function(require,module,exports){
+},{"../client":50,"./tcp":52,"./tls":53,"./ws":54,"_process":59,"url":40,"xtend":100}],52:[function(require,module,exports){
 'use strict';
 var net = require('net');
 
@@ -9304,7 +9270,7 @@ function buildBuilder (client, opts) {
 
 module.exports = buildBuilder;
 
-},{"net":26}],54:[function(require,module,exports){
+},{"net":25}],53:[function(require,module,exports){
 'use strict';
 var tls = require('tls');
 
@@ -9354,7 +9320,7 @@ function buildBuilder (mqttClient, opts) {
 
 module.exports = buildBuilder;
 
-},{"tls":26}],55:[function(require,module,exports){
+},{"tls":25}],54:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -9440,7 +9406,7 @@ if ('browser' !== process.title) {
 }
 
 }).call(this,require('_process'))
-},{"_process":60,"url":41,"websocket-stream":96}],56:[function(require,module,exports){
+},{"_process":59,"url":40,"websocket-stream":97}],55:[function(require,module,exports){
 (function (process){
 'use strict';
 var Readable = require('readable-stream').Readable,
@@ -9552,7 +9518,7 @@ Store.prototype.close = function (cb) {
 module.exports = Store;
 
 }).call(this,require('_process'))
-},{"_process":60,"readable-stream":72}],57:[function(require,module,exports){
+},{"_process":59,"readable-stream":71}],56:[function(require,module,exports){
 (function (global){
 /*! Native Promise Only
     v0.8.1 (c) Kyle Simpson
@@ -9929,7 +9895,7 @@ module.exports = Store;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],58:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var wrappy = require('wrappy')
 module.exports = wrappy(once)
 
@@ -9952,7 +9918,7 @@ function once (fn) {
   return f
 }
 
-},{"wrappy":98}],59:[function(require,module,exports){
+},{"wrappy":99}],58:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -9999,7 +9965,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":60}],60:[function(require,module,exports){
+},{"_process":59}],59:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -10095,7 +10061,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],61:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -10632,7 +10598,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],62:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10718,7 +10684,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],63:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10805,16 +10771,16 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],64:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":62,"./encode":63}],65:[function(require,module,exports){
+},{"./decode":61,"./encode":62}],64:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":66}],66:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":65}],65:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -10907,7 +10873,7 @@ function forEach (xs, f) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_readable":68,"./_stream_writable":70,"_process":60,"core-util-is":30,"inherits":43}],67:[function(require,module,exports){
+},{"./_stream_readable":67,"./_stream_writable":69,"_process":59,"core-util-is":29,"inherits":42}],66:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10955,7 +10921,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":69,"core-util-is":30,"inherits":43}],68:[function(require,module,exports){
+},{"./_stream_transform":68,"core-util-is":29,"inherits":42}],67:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -11941,7 +11907,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"_process":60,"buffer":28,"core-util-is":30,"events":40,"inherits":43,"isarray":71,"stream":74,"string_decoder/":85}],69:[function(require,module,exports){
+},{"_process":59,"buffer":27,"core-util-is":29,"events":39,"inherits":42,"isarray":70,"stream":73,"string_decoder/":84}],68:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -12153,7 +12119,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":66,"core-util-is":30,"inherits":43}],70:[function(require,module,exports){
+},{"./_stream_duplex":65,"core-util-is":29,"inherits":42}],69:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -12543,12 +12509,12 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":66,"_process":60,"buffer":28,"core-util-is":30,"inherits":43,"stream":74}],71:[function(require,module,exports){
+},{"./_stream_duplex":65,"_process":59,"buffer":27,"core-util-is":29,"inherits":42,"stream":73}],70:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],72:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 (function (process){
 var Stream = require('stream'); // hack to fix a circular dependency issue when used with browserify
 exports = module.exports = require('./lib/_stream_readable.js');
@@ -12563,7 +12529,7 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable') {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":66,"./lib/_stream_passthrough.js":67,"./lib/_stream_readable.js":68,"./lib/_stream_transform.js":69,"./lib/_stream_writable.js":70,"_process":60,"stream":74}],73:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":65,"./lib/_stream_passthrough.js":66,"./lib/_stream_readable.js":67,"./lib/_stream_transform.js":68,"./lib/_stream_writable.js":69,"_process":59,"stream":73}],72:[function(require,module,exports){
 'use strict'
 
 function ReInterval (callback, interval, args) {
@@ -12613,7 +12579,7 @@ function reInterval () {
 
 module.exports = reInterval;
 
-},{}],74:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -12742,30 +12708,30 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":40,"inherits":43,"readable-stream/duplex.js":75,"readable-stream/passthrough.js":81,"readable-stream/readable.js":82,"readable-stream/transform.js":83,"readable-stream/writable.js":84}],75:[function(require,module,exports){
-arguments[4][65][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":76,"dup":65}],76:[function(require,module,exports){
+},{"events":39,"inherits":42,"readable-stream/duplex.js":74,"readable-stream/passthrough.js":80,"readable-stream/readable.js":81,"readable-stream/transform.js":82,"readable-stream/writable.js":83}],74:[function(require,module,exports){
+arguments[4][64][0].apply(exports,arguments)
+},{"./lib/_stream_duplex.js":75,"dup":64}],75:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"./_stream_readable":77,"./_stream_writable":79,"core-util-is":29,"dup":32,"inherits":42,"process-nextick-args":58}],76:[function(require,module,exports){
 arguments[4][33][0].apply(exports,arguments)
-},{"./_stream_readable":78,"./_stream_writable":80,"core-util-is":30,"dup":33,"inherits":43,"process-nextick-args":59}],77:[function(require,module,exports){
+},{"./_stream_transform":78,"core-util-is":29,"dup":33,"inherits":42}],77:[function(require,module,exports){
 arguments[4][34][0].apply(exports,arguments)
-},{"./_stream_transform":79,"core-util-is":30,"dup":34,"inherits":43}],78:[function(require,module,exports){
+},{"./_stream_duplex":75,"_process":59,"buffer":27,"buffer-shims":26,"core-util-is":29,"dup":34,"events":39,"inherits":42,"isarray":44,"process-nextick-args":58,"string_decoder/":84,"util":25}],78:[function(require,module,exports){
 arguments[4][35][0].apply(exports,arguments)
-},{"./_stream_duplex":76,"_process":60,"buffer":28,"buffer-shims":27,"core-util-is":30,"dup":35,"events":40,"inherits":43,"isarray":45,"process-nextick-args":59,"string_decoder/":85,"util":26}],79:[function(require,module,exports){
+},{"./_stream_duplex":75,"core-util-is":29,"dup":35,"inherits":42}],79:[function(require,module,exports){
 arguments[4][36][0].apply(exports,arguments)
-},{"./_stream_duplex":76,"core-util-is":30,"dup":36,"inherits":43}],80:[function(require,module,exports){
-arguments[4][37][0].apply(exports,arguments)
-},{"./_stream_duplex":76,"_process":60,"buffer":28,"buffer-shims":27,"core-util-is":30,"dup":37,"events":40,"inherits":43,"process-nextick-args":59,"util-deprecate":87}],81:[function(require,module,exports){
+},{"./_stream_duplex":75,"_process":59,"buffer":27,"buffer-shims":26,"core-util-is":29,"dup":36,"events":39,"inherits":42,"process-nextick-args":58,"util-deprecate":88}],80:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":77}],82:[function(require,module,exports){
-arguments[4][38][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":76,"./lib/_stream_passthrough.js":77,"./lib/_stream_readable.js":78,"./lib/_stream_transform.js":79,"./lib/_stream_writable.js":80,"_process":60,"dup":38}],83:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":76}],81:[function(require,module,exports){
+arguments[4][37][0].apply(exports,arguments)
+},{"./lib/_stream_duplex.js":75,"./lib/_stream_passthrough.js":76,"./lib/_stream_readable.js":77,"./lib/_stream_transform.js":78,"./lib/_stream_writable.js":79,"_process":59,"dup":37}],82:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":79}],84:[function(require,module,exports){
+},{"./lib/_stream_transform.js":78}],83:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":80}],85:[function(require,module,exports){
+},{"./lib/_stream_writable.js":79}],84:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -12988,7 +12954,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":28}],86:[function(require,module,exports){
+},{"buffer":27}],85:[function(require,module,exports){
 function E () {
 	// Keep this empty so it's easier to inherit from
   // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
@@ -13056,7 +13022,759 @@ E.prototype = {
 
 module.exports = E;
 
-},{}],87:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+var punycode = require('punycode');
+var util = require('./util');
+
+exports.parse = urlParse;
+exports.resolve = urlResolve;
+exports.resolveObject = urlResolveObject;
+exports.format = urlFormat;
+
+exports.Url = Url;
+
+function Url() {
+  this.protocol = null;
+  this.slashes = null;
+  this.auth = null;
+  this.host = null;
+  this.port = null;
+  this.hostname = null;
+  this.hash = null;
+  this.search = null;
+  this.query = null;
+  this.pathname = null;
+  this.path = null;
+  this.href = null;
+}
+
+// Reference: RFC 3986, RFC 1808, RFC 2396
+
+// define these here so at least they only have to be
+// compiled once on the first module load.
+var protocolPattern = /^([a-z0-9.+-]+:)/i,
+    portPattern = /:[0-9]*$/,
+
+    // Special case for a simple path URL
+    simplePathPattern = /^(\/\/?(?!\/)[^\?\s]*)(\?[^\s]*)?$/,
+
+    // RFC 2396: characters reserved for delimiting URLs.
+    // We actually just auto-escape these.
+    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
+
+    // RFC 2396: characters not allowed for various reasons.
+    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
+
+    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
+    autoEscape = ['\''].concat(unwise),
+    // Characters that are never ever allowed in a hostname.
+    // Note that any invalid chars are also handled, but these
+    // are the ones that are *expected* to be seen, so we fast-path
+    // them.
+    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
+    hostEndingChars = ['/', '?', '#'],
+    hostnameMaxLen = 255,
+    hostnamePartPattern = /^[+a-z0-9A-Z_-]{0,63}$/,
+    hostnamePartStart = /^([+a-z0-9A-Z_-]{0,63})(.*)$/,
+    // protocols that can allow "unsafe" and "unwise" chars.
+    unsafeProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that never have a hostname.
+    hostlessProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that always contain a // bit.
+    slashedProtocol = {
+      'http': true,
+      'https': true,
+      'ftp': true,
+      'gopher': true,
+      'file': true,
+      'http:': true,
+      'https:': true,
+      'ftp:': true,
+      'gopher:': true,
+      'file:': true
+    },
+    querystring = require('querystring');
+
+function urlParse(url, parseQueryString, slashesDenoteHost) {
+  if (url && util.isObject(url) && url instanceof Url) return url;
+
+  var u = new Url;
+  u.parse(url, parseQueryString, slashesDenoteHost);
+  return u;
+}
+
+Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
+  if (!util.isString(url)) {
+    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
+  }
+
+  // Copy chrome, IE, opera backslash-handling behavior.
+  // Back slashes before the query string get converted to forward slashes
+  // See: https://code.google.com/p/chromium/issues/detail?id=25916
+  var queryIndex = url.indexOf('?'),
+      splitter =
+          (queryIndex !== -1 && queryIndex < url.indexOf('#')) ? '?' : '#',
+      uSplit = url.split(splitter),
+      slashRegex = /\\/g;
+  uSplit[0] = uSplit[0].replace(slashRegex, '/');
+  url = uSplit.join(splitter);
+
+  var rest = url;
+
+  // trim before proceeding.
+  // This is to support parse stuff like "  http://foo.com  \n"
+  rest = rest.trim();
+
+  if (!slashesDenoteHost && url.split('#').length === 1) {
+    // Try fast path regexp
+    var simplePath = simplePathPattern.exec(rest);
+    if (simplePath) {
+      this.path = rest;
+      this.href = rest;
+      this.pathname = simplePath[1];
+      if (simplePath[2]) {
+        this.search = simplePath[2];
+        if (parseQueryString) {
+          this.query = querystring.parse(this.search.substr(1));
+        } else {
+          this.query = this.search.substr(1);
+        }
+      } else if (parseQueryString) {
+        this.search = '';
+        this.query = {};
+      }
+      return this;
+    }
+  }
+
+  var proto = protocolPattern.exec(rest);
+  if (proto) {
+    proto = proto[0];
+    var lowerProto = proto.toLowerCase();
+    this.protocol = lowerProto;
+    rest = rest.substr(proto.length);
+  }
+
+  // figure out if it's got a host
+  // user@server is *always* interpreted as a hostname, and url
+  // resolution will treat //foo/bar as host=foo,path=bar because that's
+  // how the browser resolves relative URLs.
+  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
+    var slashes = rest.substr(0, 2) === '//';
+    if (slashes && !(proto && hostlessProtocol[proto])) {
+      rest = rest.substr(2);
+      this.slashes = true;
+    }
+  }
+
+  if (!hostlessProtocol[proto] &&
+      (slashes || (proto && !slashedProtocol[proto]))) {
+
+    // there's a hostname.
+    // the first instance of /, ?, ;, or # ends the host.
+    //
+    // If there is an @ in the hostname, then non-host chars *are* allowed
+    // to the left of the last @ sign, unless some host-ending character
+    // comes *before* the @-sign.
+    // URLs are obnoxious.
+    //
+    // ex:
+    // http://a@b@c/ => user:a@b host:c
+    // http://a@b?@c => user:a host:c path:/?@c
+
+    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
+    // Review our test case against browsers more comprehensively.
+
+    // find the first instance of any hostEndingChars
+    var hostEnd = -1;
+    for (var i = 0; i < hostEndingChars.length; i++) {
+      var hec = rest.indexOf(hostEndingChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+
+    // at this point, either we have an explicit point where the
+    // auth portion cannot go past, or the last @ char is the decider.
+    var auth, atSign;
+    if (hostEnd === -1) {
+      // atSign can be anywhere.
+      atSign = rest.lastIndexOf('@');
+    } else {
+      // atSign must be in auth portion.
+      // http://a@b/c@d => host:b auth:a path:/c@d
+      atSign = rest.lastIndexOf('@', hostEnd);
+    }
+
+    // Now we have a portion which is definitely the auth.
+    // Pull that off.
+    if (atSign !== -1) {
+      auth = rest.slice(0, atSign);
+      rest = rest.slice(atSign + 1);
+      this.auth = decodeURIComponent(auth);
+    }
+
+    // the host is the remaining to the left of the first non-host char
+    hostEnd = -1;
+    for (var i = 0; i < nonHostChars.length; i++) {
+      var hec = rest.indexOf(nonHostChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+    // if we still have not hit it, then the entire thing is a host.
+    if (hostEnd === -1)
+      hostEnd = rest.length;
+
+    this.host = rest.slice(0, hostEnd);
+    rest = rest.slice(hostEnd);
+
+    // pull out port.
+    this.parseHost();
+
+    // we've indicated that there is a hostname,
+    // so even if it's empty, it has to be present.
+    this.hostname = this.hostname || '';
+
+    // if hostname begins with [ and ends with ]
+    // assume that it's an IPv6 address.
+    var ipv6Hostname = this.hostname[0] === '[' &&
+        this.hostname[this.hostname.length - 1] === ']';
+
+    // validate a little.
+    if (!ipv6Hostname) {
+      var hostparts = this.hostname.split(/\./);
+      for (var i = 0, l = hostparts.length; i < l; i++) {
+        var part = hostparts[i];
+        if (!part) continue;
+        if (!part.match(hostnamePartPattern)) {
+          var newpart = '';
+          for (var j = 0, k = part.length; j < k; j++) {
+            if (part.charCodeAt(j) > 127) {
+              // we replace non-ASCII char with a temporary placeholder
+              // we need this to make sure size of hostname is not
+              // broken by replacing non-ASCII by nothing
+              newpart += 'x';
+            } else {
+              newpart += part[j];
+            }
+          }
+          // we test again with ASCII char only
+          if (!newpart.match(hostnamePartPattern)) {
+            var validParts = hostparts.slice(0, i);
+            var notHost = hostparts.slice(i + 1);
+            var bit = part.match(hostnamePartStart);
+            if (bit) {
+              validParts.push(bit[1]);
+              notHost.unshift(bit[2]);
+            }
+            if (notHost.length) {
+              rest = '/' + notHost.join('.') + rest;
+            }
+            this.hostname = validParts.join('.');
+            break;
+          }
+        }
+      }
+    }
+
+    if (this.hostname.length > hostnameMaxLen) {
+      this.hostname = '';
+    } else {
+      // hostnames are always lower case.
+      this.hostname = this.hostname.toLowerCase();
+    }
+
+    if (!ipv6Hostname) {
+      // IDNA Support: Returns a punycoded representation of "domain".
+      // It only converts parts of the domain name that
+      // have non-ASCII characters, i.e. it doesn't matter if
+      // you call it with a domain that already is ASCII-only.
+      this.hostname = punycode.toASCII(this.hostname);
+    }
+
+    var p = this.port ? ':' + this.port : '';
+    var h = this.hostname || '';
+    this.host = h + p;
+    this.href += this.host;
+
+    // strip [ and ] from the hostname
+    // the host field still retains them, though
+    if (ipv6Hostname) {
+      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
+      if (rest[0] !== '/') {
+        rest = '/' + rest;
+      }
+    }
+  }
+
+  // now rest is set to the post-host stuff.
+  // chop off any delim chars.
+  if (!unsafeProtocol[lowerProto]) {
+
+    // First, make 100% sure that any "autoEscape" chars get
+    // escaped, even if encodeURIComponent doesn't think they
+    // need to be.
+    for (var i = 0, l = autoEscape.length; i < l; i++) {
+      var ae = autoEscape[i];
+      if (rest.indexOf(ae) === -1)
+        continue;
+      var esc = encodeURIComponent(ae);
+      if (esc === ae) {
+        esc = escape(ae);
+      }
+      rest = rest.split(ae).join(esc);
+    }
+  }
+
+
+  // chop off from the tail first.
+  var hash = rest.indexOf('#');
+  if (hash !== -1) {
+    // got a fragment string.
+    this.hash = rest.substr(hash);
+    rest = rest.slice(0, hash);
+  }
+  var qm = rest.indexOf('?');
+  if (qm !== -1) {
+    this.search = rest.substr(qm);
+    this.query = rest.substr(qm + 1);
+    if (parseQueryString) {
+      this.query = querystring.parse(this.query);
+    }
+    rest = rest.slice(0, qm);
+  } else if (parseQueryString) {
+    // no query string, but parseQueryString still requested
+    this.search = '';
+    this.query = {};
+  }
+  if (rest) this.pathname = rest;
+  if (slashedProtocol[lowerProto] &&
+      this.hostname && !this.pathname) {
+    this.pathname = '/';
+  }
+
+  //to support http.request
+  if (this.pathname || this.search) {
+    var p = this.pathname || '';
+    var s = this.search || '';
+    this.path = p + s;
+  }
+
+  // finally, reconstruct the href based on what has been validated.
+  this.href = this.format();
+  return this;
+};
+
+// format a parsed object into a url string
+function urlFormat(obj) {
+  // ensure it's an object, and not a string url.
+  // If it's an obj, this is a no-op.
+  // this way, you can call url_format() on strings
+  // to clean up potentially wonky urls.
+  if (util.isString(obj)) obj = urlParse(obj);
+  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
+  return obj.format();
+}
+
+Url.prototype.format = function() {
+  var auth = this.auth || '';
+  if (auth) {
+    auth = encodeURIComponent(auth);
+    auth = auth.replace(/%3A/i, ':');
+    auth += '@';
+  }
+
+  var protocol = this.protocol || '',
+      pathname = this.pathname || '',
+      hash = this.hash || '',
+      host = false,
+      query = '';
+
+  if (this.host) {
+    host = auth + this.host;
+  } else if (this.hostname) {
+    host = auth + (this.hostname.indexOf(':') === -1 ?
+        this.hostname :
+        '[' + this.hostname + ']');
+    if (this.port) {
+      host += ':' + this.port;
+    }
+  }
+
+  if (this.query &&
+      util.isObject(this.query) &&
+      Object.keys(this.query).length) {
+    query = querystring.stringify(this.query);
+  }
+
+  var search = this.search || (query && ('?' + query)) || '';
+
+  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
+
+  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
+  // unless they had them to begin with.
+  if (this.slashes ||
+      (!protocol || slashedProtocol[protocol]) && host !== false) {
+    host = '//' + (host || '');
+    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
+  } else if (!host) {
+    host = '';
+  }
+
+  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+  if (search && search.charAt(0) !== '?') search = '?' + search;
+
+  pathname = pathname.replace(/[?#]/g, function(match) {
+    return encodeURIComponent(match);
+  });
+  search = search.replace('#', '%23');
+
+  return protocol + host + pathname + search + hash;
+};
+
+function urlResolve(source, relative) {
+  return urlParse(source, false, true).resolve(relative);
+}
+
+Url.prototype.resolve = function(relative) {
+  return this.resolveObject(urlParse(relative, false, true)).format();
+};
+
+function urlResolveObject(source, relative) {
+  if (!source) return relative;
+  return urlParse(source, false, true).resolveObject(relative);
+}
+
+Url.prototype.resolveObject = function(relative) {
+  if (util.isString(relative)) {
+    var rel = new Url();
+    rel.parse(relative, false, true);
+    relative = rel;
+  }
+
+  var result = new Url();
+  var tkeys = Object.keys(this);
+  for (var tk = 0; tk < tkeys.length; tk++) {
+    var tkey = tkeys[tk];
+    result[tkey] = this[tkey];
+  }
+
+  // hash is always overridden, no matter what.
+  // even href="" will remove it.
+  result.hash = relative.hash;
+
+  // if the relative url is empty, then there's nothing left to do here.
+  if (relative.href === '') {
+    result.href = result.format();
+    return result;
+  }
+
+  // hrefs like //foo/bar always cut to the protocol.
+  if (relative.slashes && !relative.protocol) {
+    // take everything except the protocol from relative
+    var rkeys = Object.keys(relative);
+    for (var rk = 0; rk < rkeys.length; rk++) {
+      var rkey = rkeys[rk];
+      if (rkey !== 'protocol')
+        result[rkey] = relative[rkey];
+    }
+
+    //urlParse appends trailing / to urls like http://www.example.com
+    if (slashedProtocol[result.protocol] &&
+        result.hostname && !result.pathname) {
+      result.path = result.pathname = '/';
+    }
+
+    result.href = result.format();
+    return result;
+  }
+
+  if (relative.protocol && relative.protocol !== result.protocol) {
+    // if it's a known url protocol, then changing
+    // the protocol does weird things
+    // first, if it's not file:, then we MUST have a host,
+    // and if there was a path
+    // to begin with, then we MUST have a path.
+    // if it is file:, then the host is dropped,
+    // because that's known to be hostless.
+    // anything else is assumed to be absolute.
+    if (!slashedProtocol[relative.protocol]) {
+      var keys = Object.keys(relative);
+      for (var v = 0; v < keys.length; v++) {
+        var k = keys[v];
+        result[k] = relative[k];
+      }
+      result.href = result.format();
+      return result;
+    }
+
+    result.protocol = relative.protocol;
+    if (!relative.host && !hostlessProtocol[relative.protocol]) {
+      var relPath = (relative.pathname || '').split('/');
+      while (relPath.length && !(relative.host = relPath.shift()));
+      if (!relative.host) relative.host = '';
+      if (!relative.hostname) relative.hostname = '';
+      if (relPath[0] !== '') relPath.unshift('');
+      if (relPath.length < 2) relPath.unshift('');
+      result.pathname = relPath.join('/');
+    } else {
+      result.pathname = relative.pathname;
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    result.host = relative.host || '';
+    result.auth = relative.auth;
+    result.hostname = relative.hostname || relative.host;
+    result.port = relative.port;
+    // to support http.request
+    if (result.pathname || result.search) {
+      var p = result.pathname || '';
+      var s = result.search || '';
+      result.path = p + s;
+    }
+    result.slashes = result.slashes || relative.slashes;
+    result.href = result.format();
+    return result;
+  }
+
+  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
+      isRelAbs = (
+          relative.host ||
+          relative.pathname && relative.pathname.charAt(0) === '/'
+      ),
+      mustEndAbs = (isRelAbs || isSourceAbs ||
+                    (result.host && relative.pathname)),
+      removeAllDots = mustEndAbs,
+      srcPath = result.pathname && result.pathname.split('/') || [],
+      relPath = relative.pathname && relative.pathname.split('/') || [],
+      psychotic = result.protocol && !slashedProtocol[result.protocol];
+
+  // if the url is a non-slashed url, then relative
+  // links like ../.. should be able
+  // to crawl up to the hostname, as well.  This is strange.
+  // result.protocol has already been set by now.
+  // Later on, put the first path part into the host field.
+  if (psychotic) {
+    result.hostname = '';
+    result.port = null;
+    if (result.host) {
+      if (srcPath[0] === '') srcPath[0] = result.host;
+      else srcPath.unshift(result.host);
+    }
+    result.host = '';
+    if (relative.protocol) {
+      relative.hostname = null;
+      relative.port = null;
+      if (relative.host) {
+        if (relPath[0] === '') relPath[0] = relative.host;
+        else relPath.unshift(relative.host);
+      }
+      relative.host = null;
+    }
+    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
+  }
+
+  if (isRelAbs) {
+    // it's absolute.
+    result.host = (relative.host || relative.host === '') ?
+                  relative.host : result.host;
+    result.hostname = (relative.hostname || relative.hostname === '') ?
+                      relative.hostname : result.hostname;
+    result.search = relative.search;
+    result.query = relative.query;
+    srcPath = relPath;
+    // fall through to the dot-handling below.
+  } else if (relPath.length) {
+    // it's relative
+    // throw away the existing file, and take the new path instead.
+    if (!srcPath) srcPath = [];
+    srcPath.pop();
+    srcPath = srcPath.concat(relPath);
+    result.search = relative.search;
+    result.query = relative.query;
+  } else if (!util.isNullOrUndefined(relative.search)) {
+    // just pull out the search.
+    // like href='?foo'.
+    // Put this after the other two cases because it simplifies the booleans
+    if (psychotic) {
+      result.hostname = result.host = srcPath.shift();
+      //occationaly the auth can get stuck only in host
+      //this especially happens in cases like
+      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+      var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                       result.host.split('@') : false;
+      if (authInHost) {
+        result.auth = authInHost.shift();
+        result.host = result.hostname = authInHost.shift();
+      }
+    }
+    result.search = relative.search;
+    result.query = relative.query;
+    //to support http.request
+    if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
+      result.path = (result.pathname ? result.pathname : '') +
+                    (result.search ? result.search : '');
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  if (!srcPath.length) {
+    // no path at all.  easy.
+    // we've already handled the other stuff above.
+    result.pathname = null;
+    //to support http.request
+    if (result.search) {
+      result.path = '/' + result.search;
+    } else {
+      result.path = null;
+    }
+    result.href = result.format();
+    return result;
+  }
+
+  // if a url ENDs in . or .., then it must get a trailing slash.
+  // however, if it ends in anything else non-slashy,
+  // then it must NOT get a trailing slash.
+  var last = srcPath.slice(-1)[0];
+  var hasTrailingSlash = (
+      (result.host || relative.host || srcPath.length > 1) &&
+      (last === '.' || last === '..') || last === '');
+
+  // strip single dots, resolve double dots to parent dir
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = srcPath.length; i >= 0; i--) {
+    last = srcPath[i];
+    if (last === '.') {
+      srcPath.splice(i, 1);
+    } else if (last === '..') {
+      srcPath.splice(i, 1);
+      up++;
+    } else if (up) {
+      srcPath.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (!mustEndAbs && !removeAllDots) {
+    for (; up--; up) {
+      srcPath.unshift('..');
+    }
+  }
+
+  if (mustEndAbs && srcPath[0] !== '' &&
+      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
+    srcPath.unshift('');
+  }
+
+  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
+    srcPath.push('');
+  }
+
+  var isAbsolute = srcPath[0] === '' ||
+      (srcPath[0] && srcPath[0].charAt(0) === '/');
+
+  // put the host back
+  if (psychotic) {
+    result.hostname = result.host = isAbsolute ? '' :
+                                    srcPath.length ? srcPath.shift() : '';
+    //occationaly the auth can get stuck only in host
+    //this especially happens in cases like
+    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+    var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                     result.host.split('@') : false;
+    if (authInHost) {
+      result.auth = authInHost.shift();
+      result.host = result.hostname = authInHost.shift();
+    }
+  }
+
+  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
+
+  if (mustEndAbs && !isAbsolute) {
+    srcPath.unshift('');
+  }
+
+  if (!srcPath.length) {
+    result.pathname = null;
+    result.path = null;
+  } else {
+    result.pathname = srcPath.join('/');
+  }
+
+  //to support request.http
+  if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
+    result.path = (result.pathname ? result.pathname : '') +
+                  (result.search ? result.search : '');
+  }
+  result.auth = relative.auth || result.auth;
+  result.slashes = result.slashes || relative.slashes;
+  result.href = result.format();
+  return result;
+};
+
+Url.prototype.parseHost = function() {
+  var host = this.host;
+  var port = portPattern.exec(host);
+  if (port) {
+    port = port[0];
+    if (port !== ':') {
+      this.port = port.substr(1);
+    }
+    host = host.substr(0, host.length - port.length);
+  }
+  if (host) this.hostname = host;
+};
+
+},{"./util":87,"punycode":60,"querystring":63}],87:[function(require,module,exports){
+'use strict';
+
+module.exports = {
+  isString: function(arg) {
+    return typeof(arg) === 'string';
+  },
+  isObject: function(arg) {
+    return typeof(arg) === 'object' && arg !== null;
+  },
+  isNull: function(arg) {
+    return arg === null;
+  },
+  isNullOrUndefined: function(arg) {
+    return arg == null;
+  }
+};
+
+},{}],88:[function(require,module,exports){
 (function (global){
 
 /**
@@ -13127,14 +13845,14 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],89:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -13724,9 +14442,9 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":88,"_process":60,"inherits":43}],90:[function(require,module,exports){
-arguments[4][33][0].apply(exports,arguments)
-},{"./_stream_readable":91,"./_stream_writable":93,"core-util-is":30,"dup":33,"inherits":43,"process-nextick-args":59}],91:[function(require,module,exports){
+},{"./support/isBuffer":89,"_process":59,"inherits":42}],91:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"./_stream_readable":92,"./_stream_writable":94,"core-util-is":29,"dup":32,"inherits":42,"process-nextick-args":58}],92:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -14609,7 +15327,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":90,"_process":60,"buffer":28,"core-util-is":30,"events":40,"inherits":43,"isarray":45,"process-nextick-args":59,"string_decoder/":85,"util":26}],92:[function(require,module,exports){
+},{"./_stream_duplex":91,"_process":59,"buffer":27,"core-util-is":29,"events":39,"inherits":42,"isarray":44,"process-nextick-args":58,"string_decoder/":84,"util":25}],93:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -14790,7 +15508,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":90,"core-util-is":30,"inherits":43}],93:[function(require,module,exports){
+},{"./_stream_duplex":91,"core-util-is":29,"inherits":42}],94:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -15309,9 +16027,9 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":90,"_process":60,"buffer":28,"core-util-is":30,"events":40,"inherits":43,"process-nextick-args":59,"util-deprecate":87}],94:[function(require,module,exports){
-arguments[4][83][0].apply(exports,arguments)
-},{"./lib/_stream_transform.js":92,"dup":83}],95:[function(require,module,exports){
+},{"./_stream_duplex":91,"_process":59,"buffer":27,"core-util-is":29,"events":39,"inherits":42,"process-nextick-args":58,"util-deprecate":88}],95:[function(require,module,exports){
+arguments[4][82][0].apply(exports,arguments)
+},{"./lib/_stream_transform.js":93,"dup":82}],96:[function(require,module,exports){
 (function (process){
 var Transform = require('readable-stream/transform')
   , inherits  = require('util').inherits
@@ -15411,7 +16129,7 @@ module.exports.obj = through2(function (options, transform, flush) {
 })
 
 }).call(this,require('_process'))
-},{"_process":60,"readable-stream/transform":94,"util":89,"xtend":99}],96:[function(require,module,exports){
+},{"_process":59,"readable-stream/transform":95,"util":90,"xtend":100}],97:[function(require,module,exports){
 (function (process,global,Buffer){
 var through = require('through2')
 var duplexify = require('duplexify')
@@ -15527,10 +16245,10 @@ function WebSocketStream(target, protocols, options) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"_process":60,"buffer":28,"duplexify":31,"through2":95,"ws":97}],97:[function(require,module,exports){
+},{"_process":59,"buffer":27,"duplexify":30,"through2":96,"ws":98}],98:[function(require,module,exports){
 module.exports = window.WebSocket || window.MozWebSocket
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 // Returns a wrapper function that returns a wrapped callback
 // The wrapper function should do some stuff, and return a
 // presumably different callback function.
@@ -15565,7 +16283,7 @@ function wrappy (fn, cb) {
   }
 }
 
-},{}],99:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
