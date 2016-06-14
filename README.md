@@ -656,7 +656,8 @@ Todos.ApplicationAdapter = DS.Adapter.extend({
 Development
 --------------------------------------------------------------------------------
 
-If you would like to develop in the SDK you can just download the repository and do
+If you would like to develop in the SDK you can just download the repository
+and do
 
 ```bash
 npm install
@@ -667,3 +668,59 @@ Once that finishes, just use grunt to start the `watch` process
 ```bash
 grunt
 ```
+
+
+Contribution Guidelines
+--------------------------------------------------------------------------------
+
+This repository relies on [semantic-release-cli][semantic-release-cli] for automated
+releases and [commitizen][commitizen] and
+[cz-conventional-changelog][cz-conventional-changelog] for standardized commit
+messages and automated changelogs.
+
+
+### Committing
+
+All work should be committed to a new branch off `develop`, never to a mainline
+branch directly.  When ready to commit changes, stage them as usual with:
+
+```bash
+git add .
+```
+
+Committing changes is a little different.  In order to ensure standardized
+commit messages across time and contributors, always use the npm script:
+
+```bash
+npm run commit
+```
+
+and follow the instructions on screen.
+
+**Note**:  for an overview of commitizen and the conventional changelog tool,
+[watch the video][commitizen-video].
+
+[semantic-release-cli]: https://www.npmjs.com/package/semantic-release-cli
+[commitizen]: https://www.npmjs.com/package/commitizen
+[cz-conventional-changelog]: https://www.npmjs.com/package/cz-conventional-changelog
+[commitizen-video]: https://egghead.io/lessons/javascript-how-to-write-a-javascript-library-committing-a-new-feature-with-commitizen
+
+
+### Pull Requests
+
+When a branch is ready to merge, submit a pull request to `develop` via GitHub.
+Pull requests are automatically tested on Travis CI and may not be merged until
+all tests pass.  At that time, a team member may safely merge the PR
+into `develop`.
+
+
+### Releasing
+
+Releases are made from the `master` branch automatically.  To initiate a
+release, create a PR from `develop` to `master`.  Since releasing is automated,
+the timing and extent of these PR's is at the discretion of team members.
+
+Releasing is automated with `semantic-release`.  An automatic release is tagged
+and published to npm upon a successful merge into the `master` branch only after
+all tests successfully pass.  No human intervention is required to create
+releases other than merging a PR.
