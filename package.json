@@ -1,11 +1,15 @@
 {
   "name": "justapis-javascript-sdk",
-  "version": "0.2.1",
   "description": "A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or the browser.",
-  "repository": "AnyPresence/justapis-javascript-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AnyPresence/justapis-javascript-sdk.git"
+  },
   "main": "index.js",
   "scripts": {
-    "test": "grunt test"
+    "commit": "git-cz",
+    "test": "grunt test",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "browser": {
     "http": "./lib/shims/http/http.js",
@@ -14,7 +18,7 @@
     "./lib/cache/persistence/APMemoryStorage": "./lib/cache/persistence/APBrowserStorage"
   },
   "engines": {
-    "node" : ">=0.10"
+    "node": ">=0.12"
   },
   "author": "AnyPresence",
   "license": "MIT",
@@ -22,6 +26,8 @@
     "browserify": "^12.0.1",
     "chai": "^3.4.1",
     "chai-as-promised": "^5.1.0",
+    "commitizen": "^2.8.2",
+    "cz-conventional-changelog": "^1.1.6",
     "grunt": "^0.4.5",
     "grunt-browserify": "^4.0.1",
     "grunt-cli": "^0.1.13",
@@ -32,6 +38,7 @@
     "grunt-mocha-test": "^0.12.7",
     "grunt-mochify": "^0.3.0",
     "mocha": "^2.3.4",
+    "semantic-release": "^4.3.5",
     "sinon": "^1.17.2",
     "watchify": "^3.6.1"
   },
@@ -40,5 +47,8 @@
     "tiny-emitter": "^1.0.2",
     "xml2js": "^0.4.15",
     "xmlserializer": "^0.3.3"
+  },
+  "czConfig": {
+    "path": "node_modules/cz-conventional-changelog"
   }
 }
