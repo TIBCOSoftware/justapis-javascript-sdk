@@ -623,7 +623,8 @@ Todos.ApplicationAdapter = DS.Adapter.extend({
 Development
 --------------------------------------------------------------------------------
 
-If you would like to develop in the SDK you can just download the repository and do
+If you would like to develop in the SDK you can just download the repository
+and do
 
 ```bash
 npm install
@@ -634,3 +635,36 @@ Once that finishes, just use grunt to start the `watch` process
 ```bash
 grunt
 ```
+
+
+Contribution Guidelines
+--------------------------------------------------------------------------------
+
+This repository relies on [semantic-release-cli][semantic-release-cli] for automated
+releases and [commitizen][commitizen] and
+[cz-conventional-changelog][cz-conventional-changelog] for standardized commit
+messages and automated changelogs.
+
+All work should be committed to a new branch off `develop`, never to a mainline
+branch directly.  When ready to commit changes, stage them as usual with:
+
+```bash
+git add .
+```
+
+Committing changes is a little different.  In order to ensure standardized
+commit messages across time and contributors, always use the npm script:
+
+```bash
+npm run commit
+```
+
+and follow the instructions on screen.
+
+**Note**:  for an overview of commitizen and the conventional changelog tool,
+[watch the video][commitizen-video].
+
+[semantic-release-cli]: https://www.npmjs.com/package/semantic-release-cli
+[commitizen]: https://www.npmjs.com/package/commitizen
+[cz-conventional-changelog]: https://www.npmjs.com/package/cz-conventional-changelog
+[commitizen-video]: https://egghead.io/lessons/javascript-how-to-write-a-javascript-library-committing-a-new-feature-with-commitizen
