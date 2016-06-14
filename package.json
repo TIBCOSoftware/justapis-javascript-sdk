@@ -18,7 +18,7 @@
     "./lib/cache/persistence/APMemoryStorage": "./lib/cache/persistence/APBrowserStorage"
   },
   "engines": {
-    "node": ">=0.10"
+    "node": ">=0.12"
   },
   "author": "AnyPresence",
   "license": "MIT",
