@@ -48,13 +48,13 @@ module.exports = function(grunt) {
 
 		mochify: {
 			tests: {
-				src: ['test/browser/*.js']
+				src: ['test/*.js']
 			}
 		},
 
 		mochaTest: {
 			tests: {
-				src: ['test/node/*.js']
+				src: ['test/*.js']
 			}
 		}
 	});
