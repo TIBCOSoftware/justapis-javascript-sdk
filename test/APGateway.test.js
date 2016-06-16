@@ -136,6 +136,16 @@ describe('APGateway', function () {
 	    expect(gateway.data()).to.eql({
 	      foo: 'bar'
 	    });
+      gateway.data({
+	      value: 1,
+        anotherValue: 2,
+        baz: 'baf'
+	    });
+      expect(gateway.data()).to.eql({
+        value: 1,
+        anotherValue: 2,
+        baz: 'baf'
+	    });
 	  });
 	});
 
@@ -154,54 +164,58 @@ describe('APGateway', function () {
 
 	    var gw = gateway.copy();
 	    expect(gw).to.eql(gateway);
+	    expect(gw.config).to.eql(gateway.config);
 	  });
 	});
 
 	describe('requestTransformations()', function () {
+    it('should have a default `encode` transformation', function () {
+      var encode = require('../lib/gateway/transformations/encode');
+      expect(gateway.requestTransformations()).to.eql([encode]);
+    });
 		it('should allow to get/set request transformations', function () {
-	    var fn = function () { /* */ };
-	    gateway.requestTransformations([fn]);
-	    expect(gateway.requestTransformations()).to.eql([fn]);
+	    var fn1 = function () { /* */ };
+      var fn2 = function (p1, p2, p3) { return; };
+	    gateway.requestTransformations([fn1]);
+	    expect(gateway.requestTransformations()).to.eql([fn1]);
+      gateway.requestTransformations([fn2]);
+	    expect(gateway.requestTransformations()).to.eql([fn2]);
+      gateway.requestTransformations([fn1, fn2]);
+	    expect(gateway.requestTransformations()).to.eql([fn1, fn2]);
 	  });
 	});
 
 	describe('addRequestTransformations()', function () {
 		it('should allow to add a request transformation', function () {
-	    var fn = function () { /* */ },
-	      contains = false,
-	      tr;
-	    gateway.addRequestTransformation(fn);
-	    tr = gateway.requestTransformations();
-	    for (var i = 0; i < tr.length && !contains; i++) {
-	      if (tr[i] === fn) {
-	        contains = true;
-	      }
-	    }
-	    expect(contains).to.be.true;
+	    var fn1 = function () { /* */ };
+      var encode = require('../lib/gateway/transformations/encode');
+	    gateway.addRequestTransformation(fn1);
+	    expect(gateway.requestTransformations()).to.eql([encode, fn1]);
 	  });
 	});
 
 	describe('responseTransformations()', function () {
-		it('should allow to get/set response transformations', function () {
-	    var fn = function () { /* */ };
-	    gateway.responseTransformations([fn]);
-	    expect(gateway.responseTransformations()).to.eql([fn]);
+    it('should have a default `decode` transformation', function () {
+      var decode = require('../lib/gateway/transformations/decode');
+      expect(gateway.responseTransformations()[0]).to.eql(decode);
+    });
+    it('should allow to get/set response transformations', function () {
+	    var fn1 = function () { /* */ };
+      var fn2 = function (p1, p2, p3) { return; };
+	    gateway.responseTransformations([fn1]);
+	    expect(gateway.responseTransformations()).to.eql([fn1]);
+      gateway.responseTransformations([fn2]);
+	    expect(gateway.responseTransformations()).to.eql([fn2]);
+      gateway.responseTransformations([fn1, fn2]);
+	    expect(gateway.responseTransformations()).to.eql([fn1, fn2]);
 	  });
 	});
 
 	describe('addResponseTransformations()', function () {
-		it('should allow to add a response transformation', function () {
-	    var fn = function () { /* */ },
-	      contains = false,
-	      tr;
-	    gateway.addResponseTransformation(fn);
-	    tr = gateway.responseTransformations();
-	    for (var i = 0; i < tr.length && !contains; i++) {
-	      if (tr[i] === fn) {
-	        contains = true;
-	      }
-	    }
-	    expect(contains).to.be.true;
+    it('should allow to add a response transformation', function () {
+	    var fn1 = function () { /* */ };
+	    gateway.addResponseTransformation(fn1);
+	    expect(gateway.responseTransformations()[2]).to.eql(fn1);
 	  });
 	});
 
@@ -209,8 +223,6 @@ describe('APGateway', function () {
     it('should allow get/set', function() {
       gateway.url('www.foo.com');
       expect(gateway.url()).to.equal('www.foo.com');
-      gateway.url('https://www.example.net');
-      //expect(gateway.url()).to.equal('https://www.example.net/');
     });
     it('should parse the protocol', function() {
       gateway.url('http://www.example.net');
