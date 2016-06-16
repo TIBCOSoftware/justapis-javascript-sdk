@@ -1,0 +1,17 @@
+{
+  "name": "justapis-javascript-sdk",
+  "description": "A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or the browser.",
+  "main": "index.js",
+  "authors": [
+    "AnyPresence"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/AnyPresence/justapis-javascript-sdk",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
