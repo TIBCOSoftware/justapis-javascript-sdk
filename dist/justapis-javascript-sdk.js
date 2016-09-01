@@ -1018,7 +1018,7 @@ module.exports = {
 var EventEmitter 	= require("tiny-emitter");
 var extend          = require("../utils/extend");
 var bind            = require("../utils/bind");
-var Interval        = require("../utils/Interval");
+var Interval        = require("../utils/interval");
 var APQueueMessage  = require("./APQueueMessage");
 
 /**
@@ -1137,7 +1137,7 @@ extend(APQueue.prototype, {
 
 module.exports = APQueue;
 
-},{"../utils/Interval":19,"../utils/bind":20,"../utils/extend":22,"./APQueueMessage":11,"tiny-emitter":25}],11:[function(require,module,exports){
+},{"../utils/interval":19,"../utils/bind":20,"../utils/extend":22,"./APQueueMessage":11,"tiny-emitter":25}],11:[function(require,module,exports){
 "use strict";
 
 var EventEmitter 	= require("tiny-emitter");
