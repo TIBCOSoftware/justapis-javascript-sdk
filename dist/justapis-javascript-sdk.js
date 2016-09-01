@@ -1298,7 +1298,7 @@ module.exports = APResponse;
 var extend			= require("../../utils/extend");
 var copy			= require("../../utils/copy");
 var bind			= require("../../utils/bind");
-var HttpResponse	= require("./HttpResponse");
+var HttpResponse	= require("./http-response");
 var EventEmitter 	= require("tiny-emitter");
 
 /**
@@ -1438,7 +1438,7 @@ extend(HttpRequest.prototype, {
 
 module.exports = HttpRequest;
 
-},{"../../utils/bind":20,"../../utils/copy":21,"../../utils/extend":22,"./HttpResponse":15,"tiny-emitter":25}],15:[function(require,module,exports){
+},{"../../utils/bind":20,"../../utils/copy":21,"../../utils/extend":22,"./http-response":15,"tiny-emitter":25}],15:[function(require,module,exports){
 "use strict";
 
 var extend		= require("../../utils/extend");
@@ -1497,7 +1497,7 @@ module.exports = HttpResponse;
 
 var bind 			= require("../../utils/bind");
 var extend			= require("../../utils/extend");
-var HttpRequest		= require("./HttpRequest");
+var HttpRequest		= require("./http-request");
 
 /**
  * Tries to emulate the behaviour of node's "http" module, this allows for a common interface when sending http requests
@@ -1523,7 +1523,7 @@ extend(Http, {
 
 module.exports = Http;
 
-},{"../../utils/bind":20,"../../utils/extend":22,"./HttpRequest":14}],17:[function(require,module,exports){
+},{"../../utils/bind":20,"../../utils/extend":22,"./http-request":14}],17:[function(require,module,exports){
 "use strict";
 
 /**
