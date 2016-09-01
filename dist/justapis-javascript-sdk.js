@@ -15,25 +15,25 @@ module.exports = Gateway;
 var Es6Promise	    = require("native-promise-only");
 var extend          = require("../utils/extend");
 var bind            = require("../utils/bind");
-var defaultStorage  = require("./persistence/APMemoryStorage");
+var defaultStorage  = require("./persistence/memory-storage");
 
 /**
  * Cache class, supports caching and expiration of key/value pairs (also persistence depending on the persistence strategy used)
  * @constructor
- * @param {string} prefix - A prefix used to identify a particular instance of APCache (depending on the underlaying persistence strategy it might not be needed)
+ * @param {string} prefix - A prefix used to identify a particular instance of Cache (depending on the underlaying persistence strategy it might not be needed)
  */
-function APCache(prefix) {
+function Cache(prefix) {
     this.prefix = prefix;
-    this.storage = APCache.defaults.storage;
-    this.ttl = APCache.defaults.ttl;
-    this.expirationCheck = APCache.defaults.expirationCheck;
+    this.storage = Cache.defaults.storage;
+    this.ttl = Cache.defaults.ttl;
+    this.expirationCheck = Cache.defaults.expirationCheck;
 }
 
 /**
- * Default configuration for any APCache instance
+ * Default configuration for any Cache instance
  * @property {object} defaults
  */
-APCache.defaults = {
+Cache.defaults = {
 
    storage: defaultStorage,
 
@@ -146,18 +146,18 @@ APCache.defaults = {
    }
 };
 
-extend(APCache.prototype, {
-   set: APCache.defaults.set,
-   get: APCache.defaults.get,
-   getAll: APCache.defaults.getAll,
-   remove: APCache.defaults.remove,
-   checkTTL: APCache.defaults.checkTTL,
-   cacheKey: APCache.defaults.cacheKey,
-   flush: APCache.defaults.flush,
+extend(Cache.prototype, {
+   set: Cache.defaults.set,
+   get: Cache.defaults.get,
+   getAll: Cache.defaults.getAll,
+   remove: Cache.defaults.remove,
+   checkTTL: Cache.defaults.checkTTL,
+   cacheKey: Cache.defaults.cacheKey,
+   flush: Cache.defaults.flush,
 
    /**
     * Triggers an async cycle to remove keys that have expired
-    * @returns {APCache}
+    * @returns {Cache}
     */
    startCleanupCycle: function() {
        this.cleanupCycle = setInterval(bind(this, function() {
@@ -178,7 +178,7 @@ extend(APCache.prototype, {
 
    /**
     * Stops the expiration checking cycle
-    * @returns {APCache}
+    * @returns {Cache}
     */
    stopCleanupCycle: function() {
        if(this.cleanupCycle) {
@@ -189,9 +189,9 @@ extend(APCache.prototype, {
 });
 
 
-module.exports = APCache;
+module.exports = Cache;
 
-},{"../utils/bind":20,"../utils/extend":22,"./persistence/APMemoryStorage":3,"native-promise-only":24}],3:[function(require,module,exports){
+},{"../utils/bind":20,"../utils/extend":22,"./persistence/memory-storage":3,"native-promise-only":24}],3:[function(require,module,exports){
 "use strict";
 
 var Es6Promise  = require("native-promise-only");
@@ -199,21 +199,21 @@ var extend      = require("../../utils/extend");
 var bind        = require("../../utils/bind");
 
 /**
- * APBrowserStorage class is a persistence strategy used by default when running in the browser
+ * BrowserStorage class is a persistence strategy used by default when running in the browser
  * It uses localStorage internally to persist data
- * Since APBrowserStorage is global to all APCache instances, it uses prefixes to multiplex the localStorage space
+ * Since BrowserStorage is global to all Cache instances, it uses prefixes to multiplex the localStorage space
  * and keep the contents of each cache separate
  * @constructor
  */
-function APBrowserStorage() {
+function BrowserStorage() {
     if(typeof window.localStorage !== "undefined") {
         this.store = window.localStorage;
     } else {
-        throw new Error("window.localStorage is required for APBrowserStorage.");
+        throw new Error("window.localStorage is required for BrowserStorage.");
     }
 }
 
-extend(APBrowserStorage.prototype, {
+extend(BrowserStorage.prototype, {
    /**
     * Returns all the keys stored with the passed prefix prepended on each of them.
     * @method
@@ -327,7 +327,7 @@ extend(APBrowserStorage.prototype, {
    }
 });
 
-module.exports = new APBrowserStorage();
+module.exports = new BrowserStorage();
 
 },{"../../utils/bind":20,"../../utils/extend":22,"native-promise-only":24}],4:[function(require,module,exports){
 "use strict";
@@ -336,7 +336,7 @@ var Es6Promise	            = require("native-promise-only");
 var Url						= require("url");
 var APRequest 				= require("../request/APRequest");
 var APResponse              = require("../response/APResponse");
-var APCache                 = require("../cache/APCache");
+var Cache                 = require("../cache/cache");
 var APQueue                 = require("../queue/APQueue");
 var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
@@ -393,9 +393,9 @@ extend(Gateway, {
     },
 
 		/**
-		 * @property {APCache} RequestCache - caches GET requests
+		 * @property {Cache} RequestCache - caches GET requests
 		 */
-    RequestCache: new APCache("APRequestCache"),
+    RequestCache: new Cache("APRequestCache"),
 
 		/**
 		 * @property {APQueue} Queue - async request queue, enables pause/resume of request sending
@@ -787,7 +787,7 @@ extend(Gateway.prototype, {
 
 module.exports = Gateway;
 
-},{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
+},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
 /**

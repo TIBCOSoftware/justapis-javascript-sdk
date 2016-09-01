@@ -15,7 +15,7 @@
     "http": "./lib/shims/http/http.js",
     "url": "./lib/shims/url/url.js",
     "./lib/parsers/xml": "./lib/shims/xml/xml.js",
-    "./lib/cache/persistence/APMemoryStorage": "./lib/cache/persistence/APBrowserStorage"
+    "./lib/cache/persistence/memory-storage": "./lib/cache/persistence/browser-storage"
   },
   "engines": {
     "node": ">=0.12"
