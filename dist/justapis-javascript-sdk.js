@@ -337,7 +337,7 @@ var Url						= require("url");
 var APRequest 				= require("../request/APRequest");
 var APResponse              = require("../response/APResponse");
 var Cache                 = require("../cache/cache");
-var APQueue                 = require("../queue/APQueue");
+var APQueue                 = require("../queue/queue");
 var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
 var copy					= require("../utils/copy");
@@ -787,7 +787,7 @@ extend(Gateway.prototype, {
 
 module.exports = Gateway;
 
-},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/form-data":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
+},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/form-data":8,"../parsers/json":9,"../parsers/xml":18,"../queue/queue":11,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1017,9 +1017,28 @@ module.exports = {
 
 var EventEmitter 	= require("tiny-emitter");
 var extend          = require("../utils/extend");
+
+/**
+ * Wraps an element in an EventEmitter
+ * @constructor
+ */
+function APQueueMessage(content) {
+    this.content = content;
+}
+
+APQueueMessage.prototype = new EventEmitter();
+APQueueMessage.prototype.constructor = APQueueMessage;
+
+module.exports = APQueueMessage;
+
+},{"../utils/extend":21,"tiny-emitter":25}],11:[function(require,module,exports){
+"use strict";
+
+var EventEmitter 	= require("tiny-emitter");
+var extend          = require("../utils/extend");
 var bind            = require("../utils/bind");
 var Interval        = require("../utils/interval");
-var APQueueMessage  = require("./APQueueMessage");
+var APQueueMessage  = require("./queue-message");
 
 /**
  * Asynchronous queue used to dispatch requests to an API
@@ -1137,26 +1156,7 @@ extend(APQueue.prototype, {
 
 module.exports = APQueue;
 
-},{"../utils/bind":19,"../utils/extend":21,"../utils/interval":22,"./APQueueMessage":11,"tiny-emitter":25}],11:[function(require,module,exports){
-"use strict";
-
-var EventEmitter 	= require("tiny-emitter");
-var extend          = require("../utils/extend");
-
-/**
- * Wraps an element in an EventEmitter
- * @constructor
- */
-function APQueueMessage(content) {
-    this.content = content;
-}
-
-APQueueMessage.prototype = new EventEmitter();
-APQueueMessage.prototype.constructor = APQueueMessage;
-
-module.exports = APQueueMessage;
-
-},{"../utils/extend":21,"tiny-emitter":25}],12:[function(require,module,exports){
+},{"../utils/bind":19,"../utils/extend":21,"../utils/interval":22,"./queue-message":10,"tiny-emitter":25}],12:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	    = require("native-promise-only");
