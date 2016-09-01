@@ -344,7 +344,7 @@ var copy					= require("../utils/copy");
 var JSONParser				= require("../parsers/json");
 // The parsers/xml.js file is only used on a node env, in browserify a shim will be used (see package.json "browser" field)
 var XMLParser				= require("../parsers/xml");
-var FormDataParser			= require("../parsers/formData");
+var FormDataParser			= require("../parsers/form-data");
 var EncodeTransformation	= require("./transformations/encode");
 var DecodeTransformation	= require("./transformations/decode");
 var hpkp                    = require("../hpkp/hpkp");
@@ -787,7 +787,7 @@ extend(Gateway.prototype, {
 
 module.exports = Gateway;
 
-},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
+},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/form-data":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
 /**
