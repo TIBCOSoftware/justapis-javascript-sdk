@@ -9,7 +9,7 @@ var PassThrough		= require("stream").PassThrough;
 var http			= require("http");
 
 var Es6Promise      = require("native-promise-only");
-var APGateway		= require("../../index.js");
+var Gateway		= require("../../index.js");
 
 chai.use(chaiAsPromised);
 
@@ -17,7 +17,7 @@ var expect = chai.expect;
 var should = chai.should();
 
 
-describe("APGateway", function() {
+describe("Gateway", function() {
 	var gateway, $request, $write;
 
 	/**
@@ -54,8 +54,8 @@ describe("APGateway", function() {
 
 	beforeEach(function() {
 		$request = sinon.stub(http, 'request');
-        APGateway.RequestCache.flush();
-		gateway = new APGateway();
+        Gateway.RequestCache.flush();
+		gateway = new Gateway();
 		gateway
             .contentType("application/json")
             .cache(false);
@@ -66,20 +66,20 @@ describe("APGateway", function() {
 	});
 
 	it("should exist", function() {
-		expect(APGateway).to.exist;
+		expect(Gateway).to.exist;
 	});
 
 	it("should act as a factory", function() {
-		expect(gateway).to.be.an.instanceof(APGateway);
+		expect(gateway).to.be.an.instanceof(Gateway);
 	});
 
 	it("should act as a constructor", function() {
-		expect(gateway).to.be.an.instanceof(APGateway);
+		expect(gateway).to.be.an.instanceof(Gateway);
 	});
 
 	it("should have default properties when created", function() {
-		var gw = new APGateway();
-		expect(gw.config).to.eql(APGateway.defaults);
+		var gw = new Gateway();
+		expect(gw.config).to.eql(Gateway.defaults);
 	});
 
 	it("should allow to get/set the url", function() {
@@ -295,8 +295,8 @@ describe("APGateway", function() {
     });
 
     it("should queue requests", function(done) {
-       APGateway.Queue.pause();
-       APGateway.RequestCache.flush();
+       Gateway.Queue.pause();
+       Gateway.RequestCache.flush();
 
        gateway.cache(false).method("GET").url("/people");
 
@@ -307,9 +307,9 @@ describe("APGateway", function() {
            promises.push(gateway.execute());
        }
 
-       expect(APGateway.Queue.messages.length).to.equal(6);
+       expect(Gateway.Queue.messages.length).to.equal(6);
 
-       APGateway.Queue.resume();
+       Gateway.Queue.resume();
        done();
     });
 

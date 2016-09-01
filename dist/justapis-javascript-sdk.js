@@ -1,14 +1,15 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
-var APGateway = require('./lib/gateway/APGateway');
+var Gateway = require('./lib/gateway/gateway');
 
-if(typeof window !== "undefined") {
-	window.APGateway = APGateway;
+if(typeof window !== 'undefined') {
+	window.Gateway = Gateway;
 }
 
-module.exports = APGateway;
-},{"./lib/gateway/APGateway":4}],2:[function(require,module,exports){
+module.exports = Gateway;
+
+},{"./lib/gateway/gateway":4}],2:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	    = require("native-promise-only");
@@ -349,22 +350,22 @@ var DecodeTransformation	= require("./transformations/decode");
 var hpkp                    = require("../hpkp/hpkp");
 
 /**
- * APGateway class
+ * Gateway class
  * @constructor
- * @param {object} options - cofiguration options for the APGateway
+ * @param {object} options - cofiguration options for the Gateway
  */
-function APGateway(options) {
+function Gateway(options) {
 	this.config = {};
 
-	extend(this.config, APGateway.defaults);
+	extend(this.config, Gateway.defaults);
 
-	this.config.url = copy(APGateway.defaults.url);
-	this.config.data = copy(APGateway.defaults.data);
-	this.config.headers = copy(APGateway.defaults.headers);
-	this.config.parsers = copy(APGateway.defaults.parsers);
+	this.config.url = copy(Gateway.defaults.url);
+	this.config.data = copy(Gateway.defaults.data);
+	this.config.headers = copy(Gateway.defaults.headers);
+	this.config.parsers = copy(Gateway.defaults.parsers);
 	this.config.transformations = {
-		request: copy(APGateway.defaults.transformations.request),
-		response: copy(APGateway.defaults.transformations.response)
+		request: copy(Gateway.defaults.transformations.request),
+		response: copy(Gateway.defaults.transformations.response)
 	};
 
 	if(options && typeof options.url === "string") {
@@ -382,13 +383,13 @@ function APGateway(options) {
 /**
  * Static
  */
-extend(APGateway, {
+extend(Gateway, {
 		/**
-		 * Create an APGateway
-		 * @param {object} options - configuration options for the APGateway
+		 * Create an Gateway
+		 * @param {object} options - configuration options for the Gateway
 		 */
     create: function(options) {
-        return new APGateway(options);
+        return new Gateway(options);
     },
 
 		/**
@@ -417,7 +418,7 @@ extend(APGateway, {
     Promise: Es6Promise,
 
 		/**
-		 * @property {object} defaults - default configuration for any APGateway object
+		 * @property {object} defaults - default configuration for any Gateway object
 		 */
     defaults: {
         url: {
@@ -450,7 +451,7 @@ extend(APGateway, {
                 // Cache response
                 function(response) {
                     if(response.cache && response.origin.method === "GET") {
-                        APGateway.RequestCache.set(response.origin.url, response);
+                        Gateway.RequestCache.set(response.origin.url, response);
                     }
                     return response;
                 }
@@ -462,13 +463,13 @@ extend(APGateway, {
 /**
  * Methods
  */
-extend(APGateway.prototype, {
+extend(Gateway.prototype, {
 
 	/**
-	 * Getter/Setter of base url for an APGateway object
+	 * Getter/Setter of base url for an Gateway object
 	 * @method
 	 * @param {string|undefined} url - the base url to set or undefined if being used as a getter
-	 * @returns {string|APGateway}
+	 * @returns {string|Gateway}
 	 */
 	url: function(url) {
 		if(url) {
@@ -486,7 +487,7 @@ extend(APGateway.prototype, {
 	 * Getter/Setter of the http method/verb to use when launching a request
 	 * @method
 	 * @param {string|undefined} method - can be GET, POST, PUT, PATCH, DELETE or any other verb supported by http, must be capitalized
-	 * @returns {string|APGateway}
+	 * @returns {string|Gateway}
 	 */
 	method: function(method) {
 		if(method) {
@@ -503,7 +504,7 @@ extend(APGateway.prototype, {
 	 * Getter/Setter of the data being sent in a request
 	 * @method
 	 * @param {object|undefined} data - the data to be sent
-	 * @returns {object|APGateway}
+	 * @returns {object|Gateway}
 	 */
 	data: function(data) {
 		if(data) {
@@ -518,7 +519,7 @@ extend(APGateway.prototype, {
 	 * Getter/Setter of the type of data expected in the response
 	 * @method
 	 * @param {string|undefined} dataType - the data type or undefined if used as a getter
-	 * @returns {string|APGateway}
+	 * @returns {string|Gateway}
 	 */
   dataType: function(dataType) {
     if(dataType) {
@@ -535,7 +536,7 @@ extend(APGateway.prototype, {
 	 * Getter/Setter of the type of data to send in the request
 	 * @method
 	 * @param {string|undefined} contentType - the data type or undefined if used as a getter
-	 * @returns {string|APGateway}
+	 * @returns {string|Gateway}
 	 */
 	contentType: function(contentType) {
 		var headers, contentTypeHeader;
@@ -558,7 +559,7 @@ extend(APGateway.prototype, {
 	 * If argument is undefined it will return the current headers object
 	 * @method
 	 * @param {object|undefined} headers
-	 * @returns {string|APGateway}
+	 * @returns {string|Gateway}
 	 */
 	headers: function(headers) {
 		if(headers) {
@@ -575,7 +576,7 @@ extend(APGateway.prototype, {
 	 * Getter/Setter for withCredentials flag, it will only set the value is a type boolean is passed
 	 * @method
 	 * @param {boolean|undefined} withCredentials
-	 * @returns {boolean|APGateway}
+	 * @returns {boolean|Gateway}
 	 */
 	withCredentials: function(withCredentials) {
 		if(typeof withCredentials === "boolean") {
@@ -588,10 +589,10 @@ extend(APGateway.prototype, {
 
 	/**
 	 * Getter/Setter for silent fail flag, it will only set the value if a boolean is passed
-	 * If true, the APGateway will catch any errors triggered from a request and fail silently
+	 * If true, the Gateway will catch any errors triggered from a request and fail silently
 	 * @method
 	 * @param {boolean|undefined} silent
-	 * @returns {boolean|APGateway}
+	 * @returns {boolean|Gateway}
 	 */
 	silentFail: function(silent) {
 		if(typeof silent === "boolean") {
@@ -606,7 +607,7 @@ extend(APGateway.prototype, {
 	 * Getter/Setter for caching flag, it will only set the value if a boolean is passed
 	 * @method
 	 * @param {boolean|undefined} active
-	 * @returns {boolean|APGateway}
+	 * @returns {boolean|Gateway}
 	 */
   cache: function(active) {
       if(typeof active === "boolean") {
@@ -618,13 +619,13 @@ extend(APGateway.prototype, {
   },
 
 	/**
-	 * Creates a new instance of APGateway with all configuration copied from the original one
+	 * Creates a new instance of Gateway with all configuration copied from the original one
 	 * Configuration is not deeply copied.
 	 * @method
-	 * @returns {APGateway} - the copy of the APGateway
+	 * @returns {Gateway} - the copy of the Gateway
 	 */
 	copy: function() {
-		var gw = new APGateway(this.config);
+		var gw = new Gateway(this.config);
 		gw.headers(copy(this.headers()));
 		gw.data(copy(this.data()));
 		gw.config.parsers = copy(this.config.parsers);
@@ -638,7 +639,7 @@ extend(APGateway.prototype, {
 	 * Request transformations are a pipeline of functions to be applied to the request object before sent
 	 * @method
 	 * @param {Array} transformations - the transformations to use on the request
-	 * @returns {Array|APGateway}
+	 * @returns {Array|Gateway}
 	 */
 	requestTransformations: function(transformations) {
 		if(transformations) {
@@ -656,7 +657,7 @@ extend(APGateway.prototype, {
 	 * Response transformations are a pipeline of functions to be applied to the response object when the request comes back
 	 * @method
 	 * @param {Array} transformations - the transformations to use on the response
-	 * @returns {Array|APGateway}
+	 * @returns {Array|Gateway}
 	 */
 	responseTransformations: function(transformations) {
 		if(transformations) {
@@ -673,7 +674,7 @@ extend(APGateway.prototype, {
 	 * Adds a request transformation to the current pipeline
 	 * @method
 	 * @param {function} transformation - the transformation to add
-	 * @returns {APGateway}
+	 * @returns {Gateway}
 	 */
 	addRequestTransformation: function(transformation) {
 		if(transformation && typeof transformation === "function") {
@@ -686,7 +687,7 @@ extend(APGateway.prototype, {
 	 * Adds a response transformation to the current pipeline
 	 * @method
 	 * @param {function} transformation - the transformation to add
-	 * @returns {APGateway}
+	 * @returns {Gateway}
 	 */
 	addResponseTransformation: function(transformation) {
 		if(transformation && typeof transformation === "function") {
@@ -696,7 +697,7 @@ extend(APGateway.prototype, {
 	},
 
 	/**
-	 * Sets Http public key pinning headers on the APGateway
+	 * Sets Http public key pinning headers on the Gateway
 	 * @method
 	 * @param {object} options
 	 * 			hpkp options must include:
@@ -710,7 +711,7 @@ extend(APGateway.prototype, {
 	 *				reportOnly {boolean} - whether to use Public-Key-Pins-Report-Only mode instead of Public-Key-Pins
 	 *				reportUri {string} - the URI to report failures to
 	 *			}
-	 * @returns {APGateway}
+	 * @returns {Gateway}
 	 */
   hpkp: function(options) {
       var header = hpkp(options.sha256s, options.maxAge, options.includeSubdomains, options.reportOnly, options.reportUri);
@@ -746,7 +747,7 @@ extend(APGateway.prototype, {
     requestKey = request.fullUrl();
 
     if(this.config.cache && request.method === "GET") {
-        return APGateway.RequestCache.get(requestKey).then(bind(this, function(value) {
+        return Gateway.RequestCache.get(requestKey).then(bind(this, function(value) {
             if(value !== undefined) {
                 var res = new APResponse();
                 extend(res, value);
@@ -769,7 +770,7 @@ extend(APGateway.prototype, {
   sendRequest: function(request) {
       var self = this;
       return new Es6Promise(function(resolve, reject) {
-          APGateway.Queue.queue(request, function(req) {
+          Gateway.Queue.queue(request, function(req) {
               var responseTransformations = self.responseTransformations();
               var promise = req.send();
               for(var i=0; i<responseTransformations.length; i++) {
@@ -784,7 +785,7 @@ extend(APGateway.prototype, {
   }
 });
 
-module.exports = APGateway;
+module.exports = Gateway;
 
 },{"../cache/APCache":2,"../hpkp/hpkp":7,"../parsers/formData":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
@@ -1171,7 +1172,7 @@ var APResponse		= require("../response/APResponse");
 /**
  * Represents a single request
  * @constructor
- * @param {object} options - the configuration for the request (see APGateway)
+ * @param {object} options - the configuration for the request (see Gateway)
  */
 function APRequest(options) {
 	options = options || {};

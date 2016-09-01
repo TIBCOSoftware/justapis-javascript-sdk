@@ -4,7 +4,7 @@ var mocha 			= require("mocha");
 var chai			= require("chai");
 var chaiAsPromised	= require("chai-as-promised");
 var sinon			= require("sinon");
-var APGateway		= require("../../index.js");
+var Gateway		= require("../../index.js");
 var Es6Promise      = require("native-promise-only");
 
 chai.use(chaiAsPromised);
@@ -51,11 +51,11 @@ function initServer(server) {
 	});
 }
 
-describe("APGateway", function() {
+describe("Gateway", function() {
 	var server, gateway;
 	beforeEach(function() {
-        APGateway.RequestCache.flush();
-		gateway = new APGateway();
+        Gateway.RequestCache.flush();
+		gateway = new Gateway();
 		gateway.contentType("application/json");
         gateway.cache(false);
 
@@ -69,20 +69,20 @@ describe("APGateway", function() {
 	});
 
 	it("should exist", function() {
-		expect(APGateway).to.exist;
+		expect(Gateway).to.exist;
 	});
 
 	it("should act as a factory", function() {
-		expect(gateway).to.be.an.instanceof(APGateway);
+		expect(gateway).to.be.an.instanceof(Gateway);
 	});
 
 	it("should act as a constructor", function() {
-		expect(gateway).to.be.an.instanceof(APGateway);
+		expect(gateway).to.be.an.instanceof(Gateway);
 	});
 
 	it("should have default properties when created", function() {
-		var gw = new APGateway();
-		expect(gw.config).to.eql(APGateway.defaults);
+		var gw = new Gateway();
+		expect(gw.config).to.eql(Gateway.defaults);
 	});
 
 	it("should allow to get/set the url", function() {
@@ -284,8 +284,8 @@ describe("APGateway", function() {
     });
 
     it("should queue requests", function(done) {
-       APGateway.Queue.pause();
-       APGateway.RequestCache.flush();
+       Gateway.Queue.pause();
+       Gateway.RequestCache.flush();
 
        gateway.cache(false).method("GET").url("/people");
 
@@ -298,16 +298,16 @@ describe("APGateway", function() {
            gateway.execute()
        ];
 
-       expect(APGateway.Queue.messages.length).to.equal(6);
+       expect(Gateway.Queue.messages.length).to.equal(6);
 
-       APGateway.Queue.throttleBy(100);
+       Gateway.Queue.throttleBy(100);
 
        Es6Promise.all(promises).then(function() {
-           expect(APGateway.Queue.messages.length).to.equal(0);
+           expect(Gateway.Queue.messages.length).to.equal(0);
            done();
        });
 
-       APGateway.Queue.resume();
+       Gateway.Queue.resume();
 
     });
 
