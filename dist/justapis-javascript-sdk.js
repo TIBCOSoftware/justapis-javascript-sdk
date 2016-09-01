@@ -334,10 +334,10 @@ module.exports = new BrowserStorage();
 
 var Es6Promise	            = require("native-promise-only");
 var Url						= require("url");
-var APRequest 				= require("../request/request");
-var APResponse              = require("../response/response");
+var Request 				= require("../request/request");
+var Response              = require("../response/response");
 var Cache                 = require("../cache/cache");
-var APQueue                 = require("../queue/queue");
+var Queue                 = require("../queue/queue");
 var bind					= require("../utils/bind");
 var extend					= require("../utils/extend");
 var copy					= require("../utils/copy");
@@ -400,17 +400,17 @@ extend(Gateway, {
 		/**
 		 * @property {APQueue} Queue - async request queue, enables pause/resume of request sending
 		 */
-    Queue: new APQueue(),
+    Queue: new Queue(),
 
 		/**
 		 * @property {APRequest} APRequest - convenience access to APRequest class constructor
 		 */
-    APRequest: APRequest,
+    APRequest: Request,
 
 		/**
 		 * @property {APResponse} APResponse - convenience access to APResponse class constructor
 		 */
-    APResponse: APResponse,
+    APResponse: Response,
 
 		/**
 		 * @property {Promise} Promise - convenience access to native ES2015 Promise implementation
@@ -742,14 +742,14 @@ extend(Gateway.prototype, {
 		for(i=0; i<reqTrans.length; i++) {
 			options = reqTrans[i](options);
 		}
-		request = new APRequest(options);
+		request = new Request(options);
 
     requestKey = request.fullUrl();
 
     if(this.config.cache && request.method === "GET") {
         return Gateway.RequestCache.get(requestKey).then(bind(this, function(value) {
             if(value !== undefined) {
-                var res = new APResponse();
+                var res = new Response();
                 extend(res, value);
                 return res;
             } else {
@@ -1038,7 +1038,7 @@ var EventEmitter 	= require("tiny-emitter");
 var extend          = require("../utils/extend");
 var bind            = require("../utils/bind");
 var Interval        = require("../utils/interval");
-var APQueueMessage  = require("./queue-message");
+var QueueMessage  = require("./queue-message");
 
 /**
  * Asynchronous queue used to dispatch requests to an API
@@ -1062,7 +1062,7 @@ extend(APQueue.prototype, {
      * @returns {APQueueMessage}
      */
     queue: function(element, fn) {
-        var message = new APQueueMessage(element);
+        var message = new QueueMessage(element);
         if(typeof fn === "function") {
             message.on("dispatch", fn);
         }
@@ -1167,7 +1167,7 @@ var http			= require("http");
 var extend			= require("../utils/extend");
 var copy			= require("../utils/copy");
 var bind 			= require("../utils/bind");
-var APResponse		= require("../response/response");
+var Response		= require("../response/response");
 
 /**
  * Represents a single request
@@ -1238,7 +1238,7 @@ extend(APRequest.prototype, {
 
 				res.on("end", function() {
 					// Create APResponse and finish
-					var apResponse = new APResponse(res, self.dataType, data, self.cache);
+					var apResponse = new Response(res, self.dataType, data, self.cache);
 					apResponse.parsers = self.parsers;
         	apResponse.origin = { method: self.method, url: self.fullUrl() };
 					resolve(apResponse);
