@@ -395,22 +395,22 @@ extend(Gateway, {
 		/**
 		 * @property {Cache} RequestCache - caches GET requests
 		 */
-    RequestCache: new Cache("APRequestCache"),
+    RequestCache: new Cache("RequestCache"),
 
 		/**
-		 * @property {APQueue} Queue - async request queue, enables pause/resume of request sending
+		 * @property {Queue} Queue - async request queue, enables pause/resume of request sending
 		 */
     Queue: new Queue(),
 
 		/**
-		 * @property {APRequest} APRequest - convenience access to APRequest class constructor
+		 * @property {Request} Request - convenience access to Request class constructor
 		 */
-    APRequest: Request,
+    Request: Request,
 
 		/**
-		 * @property {APResponse} APResponse - convenience access to APResponse class constructor
+		 * @property {Response} Response - convenience access to Response class constructor
 		 */
-    APResponse: Response,
+    Response: Response,
 
 		/**
 		 * @property {Promise} Promise - convenience access to native ES2015 Promise implementation
@@ -764,7 +764,7 @@ extend(Gateway.prototype, {
 	/**
 	 * Send the request to the queue and returns a Promise to be resolved with the response
 	 * @method
-	 * @param {APRequest} - the request to send
+	 * @param {Request} - the request to send
 	 * @returns {Promise}
 	 */
   sendRequest: function(request) {
@@ -792,8 +792,8 @@ module.exports = Gateway;
 
 /**
  * Decodes a response's data from XML or JSON into an object, based on the content type of the response (which is the data type of the request that originated it)
- * @param {APResponse}
- * @returns {APResponse}
+ * @param {Response}
+ * @returns {Response}
  */
 function decode(response) {
 	if(typeof response.parsers === "object") {
@@ -816,8 +816,8 @@ module.exports = decode;
 
 /**
  * Encodes a request's data into XML, JSON or FormData based on the request content type
- * @param {APRequest}
- * @returns {APRequest}
+ * @param {Request}
+ * @returns {Request}
  */
 function encode(request) {
 	var	headers = request.headers,
@@ -1022,14 +1022,14 @@ var extend          = require("../utils/extend");
  * Wraps an element in an EventEmitter
  * @constructor
  */
-function APQueueMessage(content) {
+function QueueMessage(content) {
     this.content = content;
 }
 
-APQueueMessage.prototype = new EventEmitter();
-APQueueMessage.prototype.constructor = APQueueMessage;
+QueueMessage.prototype = new EventEmitter();
+QueueMessage.prototype.constructor = QueueMessage;
 
-module.exports = APQueueMessage;
+module.exports = QueueMessage;
 
 },{"../utils/extend":21,"tiny-emitter":25}],11:[function(require,module,exports){
 "use strict";
@@ -1044,14 +1044,14 @@ var QueueMessage  = require("./queue-message");
  * Asynchronous queue used to dispatch requests to an API
  * @constructor
  */
-function APQueue() {
+function Queue() {
     this.active = true;
     this.messages = [];
     this.dequeueLoop = null;
     this.throttleDequeueBy = 300;
 }
 
-extend(APQueue.prototype, {
+extend(Queue.prototype, {
 
     /**
      * Adds an element to the queue
@@ -1059,7 +1059,7 @@ extend(APQueue.prototype, {
      * @method
      * @param {any} element - the element to queue
      * @param {function} fn - optional, callback to call when the element is dequeued
-     * @returns {APQueueMessage}
+     * @returns {QueueMessage}
      */
     queue: function(element, fn) {
         var message = new QueueMessage(element);
@@ -1078,9 +1078,9 @@ extend(APQueue.prototype, {
 
     /**
      * Flushes the queue
-     * Flushing is done using a async loop that will be throttled based on the config of APQueue
+     * Flushing is done using a async loop that will be throttled based on the config of Queue
      * @method
-     * @returns {APQueue}
+     * @returns {Queue}
      */
     dequeue: function() {
         if(this.dequeueLoop === null) {
@@ -1100,7 +1100,7 @@ extend(APQueue.prototype, {
     /**
      * Pauses the queue, in other words it blocks the dequeuing loop from running
      * @method
-     * @returns {APQueue}
+     * @returns {Queue}
      */
     pause: function() {
         this.active = false;
@@ -1110,7 +1110,7 @@ extend(APQueue.prototype, {
     /**
      * Removes blocks on the dequeuing loop and restarts the loop
      * @method
-     * @returns {APQueue}
+     * @returns {Queue}
      */
     resume: function() {
         this.active = true;
@@ -1123,7 +1123,7 @@ extend(APQueue.prototype, {
      * Throttling prevents an API to become flooded in situations when the queue has accumulated a lot of requests
      * @method
      * @param {number} milliseconds
-     * @returns {APQueue}
+     * @returns {Queue}
      */
     throttleBy: function(milliseconds) {
         if(typeof milliseconds === "number") {
@@ -1148,13 +1148,13 @@ extend(APQueue.prototype, {
                 messages.push(this.messages[i].content);
             }
         } else {
-            throw new Error("APQueue must be paused to exportable");
+            throw new Error("Queue must be paused to exportable");
         }
     }
 
 });
 
-module.exports = APQueue;
+module.exports = Queue;
 
 },{"../utils/bind":19,"../utils/extend":21,"../utils/interval":22,"./queue-message":10,"tiny-emitter":25}],12:[function(require,module,exports){
 "use strict";
@@ -1174,7 +1174,7 @@ var Response		= require("../response/response");
  * @constructor
  * @param {object} options - the configuration for the request (see Gateway)
  */
-function APRequest(options) {
+function Request(options) {
 	options = options || {};
 	extend(this, options);
 }
@@ -1183,7 +1183,7 @@ function APRequest(options) {
 /**
  * Methods
  */
-extend(APRequest.prototype, {
+extend(Request.prototype, {
 
 	/**
 	 * Builds a url (without the protocol) from the individual pieces
@@ -1198,7 +1198,7 @@ extend(APRequest.prototype, {
   },
 
 	/**
-	 * Builds a url (with the protocol), this method is used to append the url to the APResponse before returning it
+	 * Builds a url (with the protocol), this method is used to append the url to the Response before returning it
 	 * @method
 	 * @returns {string} - the url string
 	 */
@@ -1237,11 +1237,11 @@ extend(APRequest.prototype, {
 				});
 
 				res.on("end", function() {
-					// Create APResponse and finish
-					var apResponse = new Response(res, self.dataType, data, self.cache);
-					apResponse.parsers = self.parsers;
-        	apResponse.origin = { method: self.method, url: self.fullUrl() };
-					resolve(apResponse);
+					// Create Response and finish
+					var response = new Response(res, self.dataType, data, self.cache);
+					response.parsers = self.parsers;
+        	response.origin = { method: self.method, url: self.fullUrl() };
+					resolve(response);
 				});
 			});
 
@@ -1258,7 +1258,7 @@ extend(APRequest.prototype, {
 	}
 });
 
-module.exports = APRequest;
+module.exports = Request;
 
 },{"../response/response":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"http":16,"native-promise-only":24}],13:[function(require,module,exports){
 "use strict";
@@ -1273,16 +1273,16 @@ var extend	= require("../utils/extend");
  * @param {string} data - the full data from the response
  * @param {boolean} cache - whether the response should be cached
  */
-function APResponse(response, dataType, data, cache) {
+function Response(response, dataType, data, cache) {
 	extend(
 		this,
-		APResponse.defaults,
+		Response.defaults,
 		response,
 		{ data: data, contentType: dataType, cache: cache }
 	);
 }
 
-APResponse.defaults = {
+Response.defaults = {
 	statusCode: 0,
 	statusMessage: "",
 	data: {},
@@ -1290,7 +1290,7 @@ APResponse.defaults = {
   cache: false
 };
 
-module.exports = APResponse;
+module.exports = Response;
 
 },{"../utils/extend":21}],14:[function(require,module,exports){
 "use strict";

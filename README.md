@@ -287,8 +287,8 @@ Now when get your persisted requests you can just resend them.
 
 var gateway = new Gateway();
 persistedRequests.forEach(function(requestData) {
-   // First we need to recreate the APRequest object
-   var request = Object.create(Gateway.APRequest, requestData);
+   // First we need to recreate the Request object
+   var request = Object.create(Gateway.Request, requestData);
    gateway
     .sendRequest(request)
     .then(function(res) {
