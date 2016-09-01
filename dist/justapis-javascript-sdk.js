@@ -191,7 +191,7 @@ extend(Cache.prototype, {
 
 module.exports = Cache;
 
-},{"../utils/bind":20,"../utils/extend":22,"./persistence/memory-storage":3,"native-promise-only":24}],3:[function(require,module,exports){
+},{"../utils/bind":19,"../utils/extend":21,"./persistence/memory-storage":3,"native-promise-only":24}],3:[function(require,module,exports){
 "use strict";
 
 var Es6Promise  = require("native-promise-only");
@@ -329,7 +329,7 @@ extend(BrowserStorage.prototype, {
 
 module.exports = new BrowserStorage();
 
-},{"../../utils/bind":20,"../../utils/extend":22,"native-promise-only":24}],4:[function(require,module,exports){
+},{"../../utils/bind":19,"../../utils/extend":21,"native-promise-only":24}],4:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	            = require("native-promise-only");
@@ -787,7 +787,7 @@ extend(Gateway.prototype, {
 
 module.exports = Gateway;
 
-},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/form-data":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
+},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/form-data":8,"../parsers/json":9,"../parsers/xml":18,"../queue/APQueue":10,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1137,7 +1137,7 @@ extend(APQueue.prototype, {
 
 module.exports = APQueue;
 
-},{"../utils/interval":19,"../utils/bind":20,"../utils/extend":22,"./APQueueMessage":11,"tiny-emitter":25}],11:[function(require,module,exports){
+},{"../utils/bind":19,"../utils/extend":21,"../utils/interval":22,"./APQueueMessage":11,"tiny-emitter":25}],11:[function(require,module,exports){
 "use strict";
 
 var EventEmitter 	= require("tiny-emitter");
@@ -1156,7 +1156,7 @@ APQueueMessage.prototype.constructor = APQueueMessage;
 
 module.exports = APQueueMessage;
 
-},{"../utils/extend":22,"tiny-emitter":25}],12:[function(require,module,exports){
+},{"../utils/extend":21,"tiny-emitter":25}],12:[function(require,module,exports){
 "use strict";
 
 var Es6Promise	    = require("native-promise-only");
@@ -1260,7 +1260,7 @@ extend(APRequest.prototype, {
 
 module.exports = APRequest;
 
-},{"../response/APResponse":13,"../utils/bind":20,"../utils/copy":21,"../utils/extend":22,"http":16,"native-promise-only":24}],13:[function(require,module,exports){
+},{"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"http":16,"native-promise-only":24}],13:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
@@ -1292,7 +1292,7 @@ APResponse.defaults = {
 
 module.exports = APResponse;
 
-},{"../utils/extend":22}],14:[function(require,module,exports){
+},{"../utils/extend":21}],14:[function(require,module,exports){
 "use strict";
 
 var extend			= require("../../utils/extend");
@@ -1438,7 +1438,7 @@ extend(HttpRequest.prototype, {
 
 module.exports = HttpRequest;
 
-},{"../../utils/bind":20,"../../utils/copy":21,"../../utils/extend":22,"./http-response":15,"tiny-emitter":25}],15:[function(require,module,exports){
+},{"../../utils/bind":19,"../../utils/copy":20,"../../utils/extend":21,"./http-response":15,"tiny-emitter":25}],15:[function(require,module,exports){
 "use strict";
 
 var extend		= require("../../utils/extend");
@@ -1492,7 +1492,7 @@ extend(HttpResponse.prototype, {
 
 module.exports = HttpResponse;
 
-},{"../../utils/extend":22,"tiny-emitter":25}],16:[function(require,module,exports){
+},{"../../utils/extend":21,"tiny-emitter":25}],16:[function(require,module,exports){
 "use strict";
 
 var bind 			= require("../../utils/bind");
@@ -1523,7 +1523,7 @@ extend(Http, {
 
 module.exports = Http;
 
-},{"../../utils/bind":20,"../../utils/extend":22,"./http-request":14}],17:[function(require,module,exports){
+},{"../../utils/bind":19,"../../utils/extend":21,"./http-request":14}],17:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1604,6 +1604,78 @@ module.exports = {
 "use strict";
 
 /**
+ * Binds a function to a context
+ * @param {object} context
+ * @param {function} fn
+ * @returns {function} - the bound function
+ */
+module.exports = function bind(context, fn) {
+	if(context && fn && typeof fn === "function") {
+		return function() {
+			return fn.apply(context, arguments);
+		};
+	}
+};
+
+},{}],20:[function(require,module,exports){
+"use strict";
+
+/**
+ * Returns a shallow copy of an object/Array
+ * @param {any} src - the object to copy
+ * @returns {any} - the copy
+ */
+module.exports = function copy(src) {
+	var copied;
+	if(src instanceof Array) {
+		copied = src.slice(0, src.length);
+	} else if(typeof src === "object") {
+		copied = {};
+		for(var key in src) {
+			if(src.hasOwnProperty(key)) {
+				copied[key] = src[key];
+			}
+		}
+	} else {
+		copied = src;
+	}
+	return copied;
+};
+
+},{}],21:[function(require,module,exports){
+"use strict";
+
+var toArray = require("./to-array");
+
+/**
+ * Extends an object with the key/value pairs of other objects
+ * It accepts any number of objects to extend the destination with
+ * @param {object} destination - the first argument passed is the object that will be extended
+ * @param {object} sources... - one or many object arguments passed to extend the destination with
+ * @returns {object} - the extended object
+ */
+module.exports = function extend() {
+	var args = toArray(arguments), dest = args[0], src;
+	if(typeof dest === "object" || typeof dest === "function") {
+		for(var i=1; i<args.length; i++) {
+			src = args[i];
+			if(typeof src === "object") {
+				for(var key in src) {
+					if(src.hasOwnProperty(key)) {
+						dest[key] = src[key];
+					}
+				}
+			}
+		}
+	}
+
+	return dest;
+};
+
+},{"./to-array":23}],22:[function(require,module,exports){
+"use strict";
+
+/**
  * Interval function that fixes some shortcommings of the standard setInterval function
  * @param {function} func - the function to run on each iteration of the interval
  * @param {number} wait - the interval wait time in milliseconds
@@ -1650,79 +1722,7 @@ function Interval(func, wait, times, immediate) {
 
 module.exports = Interval;
 
-},{}],20:[function(require,module,exports){
-"use strict";
-
-/**
- * Binds a function to a context
- * @param {object} context
- * @param {function} fn
- * @returns {function} - the bound function
- */
-module.exports = function bind(context, fn) {
-	if(context && fn && typeof fn === "function") {
-		return function() {
-			return fn.apply(context, arguments);
-		};
-	}
-};
-
-},{}],21:[function(require,module,exports){
-"use strict";
-
-/**
- * Returns a shallow copy of an object/Array
- * @param {any} src - the object to copy
- * @returns {any} - the copy
- */
-module.exports = function copy(src) {
-	var copied;
-	if(src instanceof Array) {
-		copied = src.slice(0, src.length);
-	} else if(typeof src === "object") {
-		copied = {};
-		for(var key in src) {
-			if(src.hasOwnProperty(key)) {
-				copied[key] = src[key];
-			}
-		}
-	} else {
-		copied = src;
-	}
-	return copied;
-};
-
-},{}],22:[function(require,module,exports){
-"use strict";
-
-var toArray = require("./toArray");
-
-/**
- * Extends an object with the key/value pairs of other objects
- * It accepts any number of objects to extend the destination with
- * @param {object} destination - the first argument passed is the object that will be extended
- * @param {object} sources... - one or many object arguments passed to extend the destination with
- * @returns {object} - the extended object
- */
-module.exports = function extend() {
-	var args = toArray(arguments), dest = args[0], src;
-	if(typeof dest === "object" || typeof dest === "function") {
-		for(var i=1; i<args.length; i++) {
-			src = args[i];
-			if(typeof src === "object") {
-				for(var key in src) {
-					if(src.hasOwnProperty(key)) {
-						dest[key] = src[key];
-					}
-				}
-			}
-		}
-	}
-
-	return dest;
-};
-
-},{"./toArray":23}],23:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 
 /**
