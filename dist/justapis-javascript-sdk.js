@@ -334,8 +334,8 @@ module.exports = new BrowserStorage();
 
 var Es6Promise	            = require("native-promise-only");
 var Url						= require("url");
-var APRequest 				= require("../request/APRequest");
-var APResponse              = require("../response/APResponse");
+var APRequest 				= require("../request/request");
+var APResponse              = require("../response/response");
 var Cache                 = require("../cache/cache");
 var APQueue                 = require("../queue/queue");
 var bind					= require("../utils/bind");
@@ -787,7 +787,7 @@ extend(Gateway.prototype, {
 
 module.exports = Gateway;
 
-},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/form-data":8,"../parsers/json":9,"../parsers/xml":18,"../queue/queue":11,"../request/APRequest":12,"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
+},{"../cache/cache":2,"../hpkp/hpkp":7,"../parsers/form-data":8,"../parsers/json":9,"../parsers/xml":18,"../queue/queue":11,"../request/request":12,"../response/response":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"./transformations/decode":5,"./transformations/encode":6,"native-promise-only":24,"url":17}],5:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1167,7 +1167,7 @@ var http			= require("http");
 var extend			= require("../utils/extend");
 var copy			= require("../utils/copy");
 var bind 			= require("../utils/bind");
-var APResponse		= require("../response/APResponse");
+var APResponse		= require("../response/response");
 
 /**
  * Represents a single request
@@ -1260,7 +1260,7 @@ extend(APRequest.prototype, {
 
 module.exports = APRequest;
 
-},{"../response/APResponse":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"http":16,"native-promise-only":24}],13:[function(require,module,exports){
+},{"../response/response":13,"../utils/bind":19,"../utils/copy":20,"../utils/extend":21,"http":16,"native-promise-only":24}],13:[function(require,module,exports){
 "use strict";
 
 var extend	= require("../utils/extend");
