@@ -1,5 +1,5 @@
 
-justapis-javascript-sdk
+nanoscale-javascript-sdk
 ================================================================================
 
 [![Latest NPM release][npm-badge]][npm-badge-url]
@@ -10,7 +10,7 @@ justapis-javascript-sdk
 [travis-badge]: https://img.shields.io/travis/AnyPresence/justapis-javascript-sdk.svg
 [travis-badge-url]: https://travis-ci.org/AnyPresence/justapis-javascript-sdk
 
-A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or
+A lightweight JavaScript SDK to connect to a nanoscale.io gateway in Node or
 the browser.
 
 
@@ -37,7 +37,7 @@ Install via NPM
 --------------------------------------------------------------------------------
 
 ```bash
-$ npm install justapis-javascript-sdk
+$ npm install nanoscale-javascript-sdk
 ```
 
 
@@ -48,14 +48,14 @@ The SDK is built with browserify. If you would like to add a single bundled file
 you can find it in the `dist` folder.
 
 ```html
-<script src="justapis-javascript-sdk/dist/justapis-javascript-sdk.min.js"></script>
+<script src="nanoscale-javascript-sdk/dist/nanoscale-javascript-sdk.min.js"></script>
 ```
 
 Else, if you are using browserify in your project you probably prefer to use
 `require` to load the dependency.
 
 ```javascript
-var Gateway = require("justapis-javascript-sdk");
+var Gateway = require('nanoscale-javascript-sdk');
 ```
 
 
@@ -65,7 +65,7 @@ The main object in the SDK is Gateway, you can think of it as an http client.
 To make a request to an endpoint you just need to do
 
 ```javascript
-var Gateway = require("justapis-javascript-sdk");
+var Gateway = require('nanoscale-javascript-sdk');
 
 var options = {
 	url: "http://my.gateway.domain.org/users",

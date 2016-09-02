@@ -1,6 +1,6 @@
 {
-  "name": "justapis-javascript-sdk",
-  "description": "A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or the browser.",
+  "name": "nanoscale-javascript-sdk",
+  "description": "A lightweight JavaScript SDK to connect to a nanoscale.io gateway in Node or the browser.",
   "repository": {
     "type": "git",
     "url": "https://github.com/AnyPresence/justapis-javascript-sdk.git"
