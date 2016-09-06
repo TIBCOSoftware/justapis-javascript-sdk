@@ -9,7 +9,7 @@ var PassThrough		= require("stream").PassThrough;
 var http			= require("http");
 
 var Es6Promise      = require("native-promise-only");
-var APGateway		= require("../../index.js");
+var Gateway		= require("../../index.js");
 
 chai.use(chaiAsPromised);
 
@@ -17,7 +17,7 @@ var expect = chai.expect;
 var should = chai.should();
 
 
-describe("APGateway", function() {
+describe("Gateway", function() {
 	var gateway, $request, $write;
 
 	/**
@@ -54,8 +54,8 @@ describe("APGateway", function() {
 
 	beforeEach(function() {
 		$request = sinon.stub(http, 'request');
-        APGateway.RequestCache.flush();
-		gateway = new APGateway();
+        Gateway.RequestCache.flush();
+		gateway = new Gateway();
 		gateway
             .contentType("application/json")
             .cache(false);

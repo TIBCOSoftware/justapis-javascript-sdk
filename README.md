@@ -1,5 +1,5 @@
 
-justapis-javascript-sdk
+nanoscale-javascript-sdk
 ================================================================================
 
 [![Latest NPM release][npm-badge]][npm-badge-url]
@@ -10,7 +10,7 @@ justapis-javascript-sdk
 [travis-badge]: https://img.shields.io/travis/AnyPresence/justapis-javascript-sdk.svg
 [travis-badge-url]: https://travis-ci.org/AnyPresence/justapis-javascript-sdk
 
-A lightweight JavaScript SDK to connect to a JustAPIs gateway in Node or
+A lightweight JavaScript SDK to connect to a nanoscale.io gateway in Node or
 the browser.
 
 
@@ -40,7 +40,7 @@ Install via NPM
 --------------------------------------------------------------------------------
 
 ```bash
-$ npm install justapis-javascript-sdk
+$ npm install nanoscale-javascript-sdk
 ```
 
 
@@ -51,24 +51,24 @@ The SDK is built with browserify. If you would like to add a single bundled file
 you can find it in the `dist` folder.
 
 ```html
-<script src="justapis-javascript-sdk/dist/justapis-javascript-sdk.min.js"></script>
+<script src="nanoscale-javascript-sdk/dist/nanoscale-javascript-sdk.min.js"></script>
 ```
 
 Else, if you are using browserify in your project you probably prefer to use
 `require` to load the dependency.
 
 ```javascript
-var APGateway = require("justapis-javascript-sdk");
+var Gateway = require('nanoscale-javascript-sdk');
 ```
 
 
 ### Creating a Gateway
 
-The main object in the SDK is APGateway, you can think of it as an http client.
+The main object in the SDK is Gateway, you can think of it as an http client.
 To make a request to an endpoint you just need to do
 
 ```javascript
-var APGateway = require("justapis-javascript-sdk");
+var Gateway = require('nanoscale-javascript-sdk');
 
 var options = {
 	url: "http://my.gateway.domain.org/users",
@@ -82,10 +82,10 @@ var options = {
 };
 
 // If you prefer objects you can do:
-var gw = new APGateway(options);
+var gw = new Gateway(options);
 
 // Or you can create it like this
-var gw = APGateway.create(options);
+var gw = Gateway.create(options);
 
 // Now executing a request is as easy as
 gw.execute().then(function(response) {
@@ -112,7 +112,7 @@ get all the configuration from the original, so you don't have to
 repeat yourself.
 
 ```javascript
-var gw = new APGateway({
+var gw = new Gateway({
 	headers: {
 		"Foo": "Bar"
 	}
@@ -135,11 +135,11 @@ Caching Requests
 
 **Note: The Caching service behaves differently in Node than in the browser**
 
-`APGateway` allow for request caching per request. Only responses to GET
+`Gateway` allow for request caching per request. Only responses to GET
 requests are cached, and this is enabled by default.
 
 ```javascript
-var gateway = new APGateway();
+var gateway = new Gateway();
 gateway.cache(false);   // Disable caching from now on...
 gateway.execute();      // Send request without caching the response
 gateway.cache(true)     // Enable caching from now on...
@@ -153,8 +153,8 @@ Since `localStorage` is persistent, you might want to flush it at some point.
 
 ```javascript
 // This will only remove localStorage entries set by
-// APGateway's request cache
-APGateway.RequestCache.flush();
+// Gateway's request cache
+Gateway.RequestCache.flush();
 ```
 
 Cached responses have a TTL (time to live) of 1 week (604800000 milliseconds).
@@ -163,7 +163,7 @@ If you would like to use a different TTL you can set it like so:
 
 ```javascript
 // ttl is in milliseconds
-APGateway.RequestCache.ttl = 60000; // set ttl to 1 minute
+Gateway.RequestCache.ttl = 60000; // set ttl to 1 minute
 ```
 
 
@@ -171,12 +171,12 @@ APGateway.RequestCache.ttl = 60000; // set ttl to 1 minute
 
 In some cases you may want to persist the cache in a different way. In the case
 of Node, for example, you may want to persist cached instances through a
-database or external service. In order to do that you can replace `APGateway.RequestCache.storage` with your own implementation. Here is a small
+database or external service. In order to do that you can replace `Gateway.RequestCache.storage` with your own implementation. Here is a small
 example of how to do just that:
 
 ```javascript
 // The storage object MUST have the following methods
-APGateway.RequestCache.storage = {
+Gateway.RequestCache.storage = {
     /**
      * Set key/value pair in storage
      *
@@ -234,21 +234,21 @@ You may have noticed that all the required methods to override return a Promise,
 this is meant as a convenience so you can easily work with async operations when
 persisting records. Any Promises/A+ compliant implementation can be used
 (or even native Promises if available), but in case you do not want to add a
-promise package just for this, **APGateway** uses an implementation internally
-that you can find in `APGateway.Promise`.
+promise package just for this, **Gateway** uses an implementation internally
+that you can find in `Gateway.Promise`.
 
 
 Async request queue
 --------------------------------------------------------------------------------
 
-**APGateway** instances use an async queue internally to send requests.
+**Gateway** instances use an async queue internally to send requests.
 This queue is shared across instances and can be paused/resumed to avoid sending
 further requests at any time. If your application goes offline you can pause the
 queue, wait for reconnection, and resume it without loosing requests.
 
 ```javascript
-APGateway.Queue.pause();
-var gateway = new APGateway();
+Gateway.Queue.pause();
+var gateway = new Gateway();
 gateway
     .url('http://localhost:1337/resource')
     .execute() // This adds the request to the queue
@@ -256,13 +256,13 @@ gateway
     .catch(function(error) { /* Got an error */ });
 
 // The queue will continue to build up until resumed
-APGateway.Queue.resume();
+Gateway.Queue.resume();
 ```
 
 Whenever the queue is resumed it will start sending pending requests
 asynchronously. Because the queue can get pretty big while paused, the queue
 will throttle the flow of requests being sent to avoid flooding the server.
-The default throttle time is 300 milliseconds, but you can adjust this by doing `APGateway.Queue.throttleBy(amountInMilliseconds)`.
+The default throttle time is 300 milliseconds, but you can adjust this by doing `Gateway.Queue.throttleBy(amountInMilliseconds)`.
 
 
 ### Persisting the Queue
@@ -276,9 +276,9 @@ otherwise an Error will be thrown**
 
 ```javascript
 // Pause the queue
-APGateway.Queue.pause();
+Gateway.Queue.pause();
 // requests will be an Array of requests
-var requests = APGateway.Queue.export();
+var requests = Gateway.Queue.export();
 
 // persists requests...
 ```
@@ -288,10 +288,10 @@ Now when get your persisted requests you can just resend them.
 ```javascript
 // Get the saved requests from your storage of choice
 
-var gateway = new APGateway();
+var gateway = new Gateway();
 persistedRequests.forEach(function(requestData) {
-   // First we need to recreate the APRequest object
-   var request = Object.create(APGateway.APRequest, requestData);
+   // First we need to recreate the Request object
+   var request = Object.create(Gateway.Request, requestData);
    gateway
     .sendRequest(request)
     .then(function(res) {
@@ -317,7 +317,7 @@ Example MQTT usage:
 ```javascript
 // Create a Gateway and specify a host, optionally including a protocol.
 // If protocol is omitted, `wss` is used.
-var gateway = new APGateway({url: 'example.net/mqtt'}),
+var gateway = new Gateway({url: 'example.net/mqtt'}),
 		// Create an MQTT client instance.  Client connects automatically.
 		client = gateway.mqtt();
 
@@ -334,7 +334,10 @@ client.on('message', function (topic, message) {
 ```
 
 
-APGateway Instance Methods
+Gateway Instance Methods
+=======
+
+Gateway Instance Methods
 --------------------------------------------------------------------------------
 
 ### Default Properties
@@ -373,7 +376,7 @@ transformations: {
 
 
 #### `url( url )`
-Returns the current url or the APGateway instance for quick chaining
+Returns the current url or the Gateway instance for quick chaining
 
 * `url`: `string`
 	* If `url` is undefined the method will act as a getter, else it will set the
@@ -381,7 +384,7 @@ Returns the current url or the APGateway instance for quick chaining
 
 
 #### `method( method )`
-Returns the current http method or the APGateway instance for quick chaining
+Returns the current http method or the Gateway instance for quick chaining
 
 * `method`: `string`
 	* Accepted values `GET`, `POST`, `PUT`, `PATCH`, `DELETE`
@@ -390,7 +393,7 @@ Returns the current http method or the APGateway instance for quick chaining
 
 
 #### `data( data )`
-Returns the current request data or the APGateway instance for quick chaining
+Returns the current request data or the Gateway instance for quick chaining
 
 * `data`: `object`
 	* If `data` is undefined the method will act as a getter, else it will set the
@@ -398,7 +401,7 @@ Returns the current request data or the APGateway instance for quick chaining
 
 
 #### `dataType( dataType )`
-Returns the current response data type or the APGateway instance for
+Returns the current response data type or the Gateway instance for
 quick chaining
 
 * `dataType`: `string`
@@ -408,7 +411,7 @@ quick chaining
 
 
 #### `contentType( contentType )`
-Returns the current content type or the APGateway instance for quick chaining
+Returns the current content type or the Gateway instance for quick chaining
 
 * `contentType`: `string`
 	* If `contentType` is undefined the method will act as a getter, else it will
@@ -416,7 +419,7 @@ Returns the current content type or the APGateway instance for quick chaining
 
 
 #### `headers( headers )`
-Returns the current headers or the APGateway instance for quick chaining
+Returns the current headers or the Gateway instance for quick chaining
 
 * `headers`: `object`
 	* The key-value pairs in `headers` will be appended to the current ones.
@@ -426,7 +429,7 @@ Returns the current headers or the APGateway instance for quick chaining
 
 #### `withCredentials( withCredentials )`
 
-Returns the current value of withCredentials or the APGateway instance for
+Returns the current value of withCredentials or the Gateway instance for
 quick chaining
 
 Enabling `withCredentials` will cause any cookies to be included in the request
@@ -441,10 +444,10 @@ by adding `Access-Control-Allow-Credentials: true` as a response header.
 
 #### `silentFail( silent )`
 
-Returns the current value of silentFail or the APGateway instance for
+Returns the current value of silentFail or the Gateway instance for
 quick chaining
 
-When a request is not successful `APGateway` will throw an error.
+When a request is not successful `Gateway` will throw an error.
 Setting `silentFail` to `true` will cause the gateway to ignore those errors.
 
 * `silent`: `boolean`
@@ -454,7 +457,7 @@ Setting `silentFail` to `true` will cause the gateway to ignore those errors.
 
 #### `cache( active )`
 
-Returns the current value of cache or the APGateway instance for quick chaining
+Returns the current value of cache or the Gateway instance for quick chaining
 
 * `active`: `boolean`
 	* Default value: `true`.  If `active` is undefined the method will act as a
@@ -463,12 +466,12 @@ Returns the current value of cache or the APGateway instance for quick chaining
 
 #### `copy()`
 
-Returns a shallow copy of the APGateway instance.
+Returns a shallow copy of the Gateway instance.
 
 
 #### `requestTransformations( transformations )`
 
-Returns the current request transformations or the APGateway instance for
+Returns the current request transformations or the Gateway instance for
 quick chaining
 
 * `transformations`: `[function]`
@@ -488,7 +491,7 @@ quick chaining
 
 #### `responseTransformations( transformations )`
 
-Returns the current response transformations or the APGateway instance for
+Returns the current response transformations or the Gateway instance for
 quick chaining
 
 * `transformations`: `[function]`
@@ -508,7 +511,7 @@ quick chaining
 
 #### `addRequestTransformation( transformation )`
 
-Returns the APGateway instance for quick chaining
+Returns the Gateway instance for quick chaining
 
 * `transformation`: `function`
 	* Adds the transformation at the end of the request transformation chain
@@ -516,7 +519,7 @@ Returns the APGateway instance for quick chaining
 
 #### `addResponseTransformation( transformation )`
 
-Returns the APGateway instance for quick chaining
+Returns the Gateway instance for quick chaining
 
 * `transformation`: `function`
 	* Adds the transformation at the end of the response transformation chain
@@ -525,7 +528,7 @@ Returns the APGateway instance for quick chaining
 #### `hpkp( options )`
 
 Sets up [HTTP Public Key Pinning](https://developer.mozilla.org/en/docs/Web/Security/Public_Key_Pinning)
-for the **APGateway** instance.
+for the **Gateway** instance.
 
 * `options`: `object`
   * `sha256s`: `[string]` (required)
@@ -567,7 +570,7 @@ angular.module('MyModule')
 		// Declare a default message to show
 		$scope.message = "Default message";
 		// Create the gateway as usual...
-		var gateway = new APGateway();
+		var gateway = new Gateway();
 
 		gateway
 		.url('http://my.service/message')
@@ -587,7 +590,7 @@ angular.module('MyModule')
 
 ### Ember
 
-Like React or Angular, there is no restriction to use APGateway in an Ember application. If you're using Ember Data however you might want to integrate APGateway so you can load Models from it.
+Like React or Angular, there is no restriction to use Gateway in an Ember application. If you're using Ember Data however you might want to integrate Gateway so you can load Models from it.
 
 
 #### Ember Data
@@ -601,7 +604,7 @@ This example code shows the basic principle of how to integrate the two.
 ```javascript
 // url of your endpoint
 var URL = "http://localhost:5000/todos";
-var gateway = new APGateway();
+var gateway = new Gateway();
 
 // This helper will make sure that the response of the gateway runs
 // inside Ember's run loop.
@@ -618,7 +621,7 @@ function runRequestToGateway(gateway) {
 	});
 }
 
-// Register an ApplicationAdapter that uses APGateway internally...
+// Register an ApplicationAdapter that uses Gateway internally...
 Todos.ApplicationAdapter = DS.Adapter.extend({
 
 	findRecord: function(store, type, id, snapshot) {

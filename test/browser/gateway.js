@@ -4,7 +4,7 @@ var mocha 			= require("mocha");
 var chai			= require("chai");
 var chaiAsPromised	= require("chai-as-promised");
 var sinon			= require("sinon");
-var APGateway		= require("../../index.js");
+var Gateway		= require("../../index.js");
 var Es6Promise      = require("native-promise-only");
 
 chai.use(chaiAsPromised);
@@ -51,11 +51,11 @@ function initServer(server) {
 	});
 }
 
-describe("APGateway", function() {
+describe("Gateway", function() {
 	var server, gateway;
 	beforeEach(function() {
-        APGateway.RequestCache.flush();
-		gateway = new APGateway();
+        Gateway.RequestCache.flush();
+		gateway = new Gateway();
 		gateway.contentType("application/json");
         gateway.cache(false);
 

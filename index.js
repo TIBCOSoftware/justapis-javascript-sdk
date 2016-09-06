@@ -1,9 +1,9 @@
 "use strict";
 
-var APGateway = require('./lib/gateway/APGateway');
+var Gateway = require('./lib/gateway/gateway');
 
-if(typeof window !== "undefined") {
-	window.APGateway = APGateway;
+if(typeof window !== 'undefined') {
+	window.Gateway = Gateway;
 }
 
-module.exports = APGateway;
+module.exports = Gateway;
