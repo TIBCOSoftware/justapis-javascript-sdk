@@ -800,11 +800,19 @@ extend(Gateway.prototype, {
 				hostname = this.config.url.hostname,
 				port = this.config.url.port,
 				path = this.config.url.path,
-				mqttProtocols = ['mqtt:', 'ws:', 'wss:'],
-				url;
+				username = this.config.username,
+				password = this.config.password,
+				mqttProtocols = ['mqtt:', 'ws:', 'wss:', 'tcp:'],
+				url,
+				options = {};
 
 		if (mqttProtocols.indexOf(protocol) < 0) {
 			protocol = 'wss:';
+		}
+
+		if (username) {
+			options.username = username;
+			options.password = password;
 		}
 
 		url = [
@@ -815,7 +823,7 @@ extend(Gateway.prototype, {
 			path
 		].join('');
 
-		return mqtt.connect(url);
+		return mqtt.connect(url, options);
 	}
 });
 
